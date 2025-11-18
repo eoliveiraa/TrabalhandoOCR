@@ -100,6 +100,22 @@
   },
   {
     "ContainingType": "CollabTechFile.Controllers.DocumentosController",
+    "Method": "Analisar",
+    "RelativePath": "api/Documentos/analisar",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "arquivo",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CollabTechFile.Controllers.DocumentosController",
     "Method": "Excluir",
     "RelativePath": "api/Documentos/Excluir/{id}",
     "HttpMethod": "DELETE",
@@ -165,183 +181,43 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "Arquivo",
-        "Type": "Microsoft.AspNetCore.Http.IFormFile",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdDocumento",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuario",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.Nome",
+        "Name": "Nome",
         "Type": "System.String",
         "IsRequired": false
       },
       {
-        "Name": "documento.Prazo",
-        "Type": "System.Nullable\u00601[[System.DateOnly, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "Name": "IdUsuario",
+        "Type": "System.Int32",
         "IsRequired": false
       },
       {
-        "Name": "documento.Status",
+        "Name": "Prazo",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "Status",
         "Type": "System.Boolean",
         "IsRequired": false
       },
       {
-        "Name": "documento.Versao",
-        "Type": "System.Double",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.Arquivo",
-        "Type": "System.Byte[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.MimeType",
+        "Name": "Versao",
         "Type": "System.String",
         "IsRequired": false
       },
       {
-        "Name": "documento.VersaoAtual",
-        "Type": "System.Double",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.CriadoEm",
+        "Name": "CriadoEm",
         "Type": "System.DateTime",
         "IsRequired": false
       },
       {
-        "Name": "documento.NovoStatus",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.AssinadoEm",
-        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.FinalizadoEm",
-        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.Comentarios",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Comentario, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.DocumentoVersos",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.DocumentoVersoes, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdUsuario",
+        "Name": "IdEmpresa",
         "Type": "System.Int32",
         "IsRequired": false
       },
       {
-        "Name": "documento.IdUsuarioNavigation.IdTipoUsuario",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresa",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Nome",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Email",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Senha",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Ativo",
-        "Type": "System.Nullable\u00601[[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Comentarios",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Comentario, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Documentos",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Documento, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.Feedbacks",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Feedback, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresaNavigation.IdEmpresa",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresaNavigation.Nome",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresaNavigation.Cnpj",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresaNavigation.Ativo",
-        "Type": "System.Nullable\u00601[[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdEmpresaNavigation.Usuarios",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Usuario, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdTipoUsuarioNavigation.IdTipoUsuario",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdTipoUsuarioNavigation.TituloTipoUsuario",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.IdUsuarioNavigation.IdTipoUsuarioNavigation.Usuarios",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.Usuario, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.RegrasDocs",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.RegrasDoc, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "documento.ReqDocs",
-        "Type": "System.Collections.Generic.ICollection\u00601[[CollabTechFile.Models.ReqDoc, CollabTechFile, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Name": "Arquivo",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
         "IsRequired": false
       }
     ],

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "RUx2T/veELg=",
+  "dgSpecHash": "EycI4e6FUg8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\54891245808\\Desktop\\AlphaTech-Pessoal\\BackEnd\\CollabTechFile\\CollabTechFile.csproj",
+  "projectFilePath": "C:\\Users\\54891245808\\Desktop\\TrabalhandoOCR\\BackEnd\\CollabTechFile\\CollabTechFile.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\54891245808\\.nuget\\packages\\azure.ai.formrecognizer\\4.1.0\\azure.ai.formrecognizer.4.1.0.nupkg.sha512",
     "C:\\Users\\54891245808\\.nuget\\packages\\azure.core\\1.47.3\\azure.core.1.47.3.nupkg.sha512",
@@ -89,7 +89,12 @@
     "C:\\Users\\54891245808\\.nuget\\packages\\system.text.json\\9.0.9\\system.text.json.9.0.9.nupkg.sha512",
     "C:\\Users\\54891245808\\.nuget\\packages\\system.threading.channels\\7.0.0\\system.threading.channels.7.0.0.nupkg.sha512",
     "C:\\Users\\54891245808\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
-    "C:\\Users\\54891245808\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
+    "C:\\Users\\54891245808\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512",
+    "C:\\Users\\54891245808\\.nuget\\packages\\uglytoad.pdfpig\\1.7.0-custom-5\\uglytoad.pdfpig.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\54891245808\\.nuget\\packages\\uglytoad.pdfpig.core\\1.7.0-custom-5\\uglytoad.pdfpig.core.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\54891245808\\.nuget\\packages\\uglytoad.pdfpig.fonts\\1.7.0-custom-5\\uglytoad.pdfpig.fonts.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\54891245808\\.nuget\\packages\\uglytoad.pdfpig.tokenization\\1.7.0-custom-5\\uglytoad.pdfpig.tokenization.1.7.0-custom-5.nupkg.sha512",
+    "C:\\Users\\54891245808\\.nuget\\packages\\uglytoad.pdfpig.tokens\\1.7.0-custom-5\\uglytoad.pdfpig.tokens.1.7.0-custom-5.nupkg.sha512"
   ],
   "logs": []
 }

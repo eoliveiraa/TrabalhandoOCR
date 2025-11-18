@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
 using CollabTechFile.DTO;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
+using System.Text;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
+using Azure;
+
 
 namespace CollabTechFile.Controllers
 {
@@ -78,9 +84,73 @@ namespace CollabTechFile.Controllers
             return Ok("Documento excluído permanentemente.");
         }
 
+        [HttpPost("analisar")]
+        public async Task<IActionResult> Analisar(IFormFile arquivo,
+    [FromServices] IConfiguration _config)
+        {
+            if (arquivo == null || arquivo.Length == 0)
+                return BadRequest("Nenhum arquivo foi enviado.");
+
+            try
+            {
+                string endpoint = _config["AzureDocIntelligence:Endpoint"];
+                string apiKey = _config["AzureDocIntelligence:Key"];
+                string modelId = _config["AzureDocIntelligence:ModelId"]; // modelo treinado
+
+                var client = new DocumentAnalysisClient(
+                    new Uri(endpoint),
+                    new AzureKeyCredential(apiKey)
+                );
+
+                using var stream = arquivo.OpenReadStream();
+
+                // executa a IA
+                AnalyzeDocumentOperation operation =
+                    await client.AnalyzeDocumentAsync(WaitUntil.Completed, modelId, stream);
+
+                AnalyzeResult result = operation.Value;
+
+                var documentos = new List<object>();
+
+                foreach (var document in result.Documents)
+                {
+                    var campos = new Dictionary<string, object>();
+
+                    foreach (var campo in document.Fields)
+                    {
+                        campos.Add(campo.Key, new
+                        {
+                            Conteudo = campo.Value.Content,
+                            Confianca = campo.Value.Confidence
+                        });
+                    }
+
+                    documentos.Add(new
+                    {
+                        Tipo = document.DocumentType,
+                        Campos = campos
+                    });
+                }
+
+                return Ok(new
+                {
+                    Modelo = result.ModelId,
+                    Documentos = documentos
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao analisar documento: {ex.Message}");
+            }
+        }
+
+
         [HttpPost("upload-ocr")]
         public async Task<IActionResult> UploadOCR([FromForm] DocumentoDTO request)
         {
+
+            // Adjusting the code to handle the correct type of `camposExtraidos`
+
             if (request.Arquivo == null || request.Arquivo.Length == 0)
                 return BadRequest("Nenhum arquivo enviado.");
 
@@ -90,16 +160,13 @@ namespace CollabTechFile.Controllers
                 var ms = new MemoryStream();
                 request.Arquivo.CopyTo(ms);
                 var fileBytes = ms.ToArray();
-                    
 
                 // 2. OCR direto dos bytes (sem arquivo temporário)
-                string modelId = "prebuilt-document";
-                var camposExtraidos = await _ocrService.ExtrairTextoAsync(fileBytes, modelId);
+                string modelId = "modelov3.1";
+                var textoExtraido = await _ocrService.ExtrairTextoAsync(fileBytes, modelId);
 
                 // 3. Criar comentários OCR
-                if (request.documento.Comentarios == null)
-                    request.documento.Comentarios = new List<Comentario>();
-
+                var comentarios = new List<Comentario>();
 
                 Documento novoDocumento = new Documento
                 {
@@ -109,25 +176,16 @@ namespace CollabTechFile.Controllers
                     NovoStatus = "Pendente"
                 };
 
-                foreach (var campo in camposExtraidos)
-                {
-                    var texto = $"{campo.Key}: {campo.Value}";
-                    if (texto.Length > 500)
-                        texto = texto[..500];
+                
 
-                    request.documento.Comentarios.Add(new Comentario
-                    {
-                        Texto = texto
-                    });
-                }
-
-                if (string.IsNullOrWhiteSpace(request.documento.Nome))
+                if (string.IsNullOrWhiteSpace(request.Nome))
                     return BadRequest("O campo 'Titulo' do documento é obrigatório.");
 
                 // 4. Salvar no BD
                 try
                 {
-                    _documentoRepository.Cadastrar(request.documento);
+                    novoDocumento.Comentarios = comentarios;
+                    _documentoRepository.Cadastrar(novoDocumento);
                 }
                 catch (Exception dbEx)
                 {
@@ -135,7 +193,7 @@ namespace CollabTechFile.Controllers
                     return StatusCode(500, $"Erro ao salvar no banco: {mensagemErro}");
                 }
 
-                return StatusCode(201, request.documento);
+                return StatusCode(201, novoDocumento);
             }
             catch (Exception ex)
             {
