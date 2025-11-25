@@ -16,7 +16,6 @@ public class DashBoardController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        // Explicitly specify the method to resolve ambiguity
         var dashboard = _dashBoardRepository.ObterDashboard();
         return Ok(dashboard);
     }

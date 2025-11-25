@@ -12,7 +12,10 @@ public partial class Documento
     [Key]
     public int IdDocumento { get; set; }
 
+    public int IdEmpresa { get; set; }
+
     public int? IdUsuario { get; set; }
+
 
     [Column("nome")]
     [StringLength(200)]
@@ -26,16 +29,19 @@ public partial class Documento
 
     [Column("versao")]
     [Unicode(false)]
-    public double Versao { get; set; }
+    public decimal Versao { get; set; }
 
     // NOVO – PDF armazenado diretamente no banco
     [Column(TypeName = "varbinary(max)")]
     public byte[]? Arquivo { get; set; }
 
+    public string? TextoOcr { get; set; }
+
+
     [StringLength(100)]
     public string? MimeType { get; set; }
 
-    public double VersaoAtual { get; set; }
+    public decimal VersaoAtual { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime CriadoEm { get; set; }

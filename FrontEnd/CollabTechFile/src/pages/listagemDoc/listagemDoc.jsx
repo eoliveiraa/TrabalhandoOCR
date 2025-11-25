@@ -13,10 +13,10 @@ import Swal from "sweetalert2";
 
 
 export default function ListagemDoc() {
-   
+
     const [listagemDoc, setListagemDoc] = useState([]);
     const [hoverIndex, setHoverIndex] = useState(null);
-    const [filtro, setFiltro] = useState("Todos"); 
+    const [filtro, setFiltro] = useState("Todos");
 
     async function listarDocumentos() {
         try {
@@ -28,8 +28,8 @@ export default function ListagemDoc() {
         }
     }
 
-    
-    
+
+
 
     // Função para excluir documento (vai para lixeira)
     async function excluirDocumento(id) {
@@ -100,53 +100,53 @@ export default function ListagemDoc() {
                                     className="cardContainer"
                                     onMouseEnter={() => setHoverIndex(index)}
                                     onMouseLeave={() => setHoverIndex(null)}
-                                >   
+                                >
                                     <Link
-                                        to={`/docAndamentoFunc/${encodeURIComponent(doc.nome.replaceAll(" ", "-"))}/${doc.idDocumento}`}
-                                        className="cardDocumento"
+                                      to={`/docAndamentoFunc/${encodeURIComponent(doc.nome.replaceAll(" ", "-"))}/${doc.idDocumento}`}
+                                            className="cardDocumento"
                                     >
-                                        <img src={Pdf} alt="Icone de Pdf" />
-                                        <div className="cardInformacoes">
-                                            <h1>{doc.nome || "Sem título"}</h1>
-                                            <p>Prazo: <span>{new Date(doc.criadoEm).toLocaleDateString('pt-BR') || "Sem data"}</span></p>
-                                            <p>Versão: <span>{doc.versao || "Sem Versão"}</span></p>
-                                            <p>Autor: <span>{doc.idUsuarioNavigation?.nome || "Autor desconhecido"}</span></p>
+                                    <img src={Pdf} alt="Icone de Pdf" />
+                                    <div className="cardInformacoes">
+                                        <h1>{doc.nome || "Sem título"}</h1>
+                                        <p>Prazo: <span>{new Date(doc.criadoEm).toLocaleDateString('pt-BR') || "Sem data"}</span></p>
+                                        <p>Versão: <span>{doc.versao || "Sem Versão"}</span></p>
+                                        <p>Autor: <span>{doc.idUsuarioNavigation?.nome || "Autor desconhecido"}</span></p>
+                                    </div>
+
+                                    <div className="cardAcoes">
+                                        <div className="infAcoes">
+                                            <img src={Editar} alt="Editar" />
                                         </div>
 
-                                        <div className="cardAcoes">
-                                            <div className="infAcoes">
-                                                <img src={Editar} alt="Editar" />
-                                            </div>
-
-                                            <div className="infAcoes">
-                                                <img
-                                                    src={Excluir}
-                                                    alt="Excluir"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation(); 
-                                                        excluirDocumento(doc.id);
-                                                    }}
-                                                    style={{ cursor: "pointer" }}
-                                                />
-                                            </div>
+                                        <div className="infAcoes">
+                                            <img
+                                                src={Excluir}
+                                                alt="Excluir"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    excluirDocumento(doc.idDocumento);;
+                                                }}
+                                                style={{ cursor: "pointer" }}
+                                            />
                                         </div>
-                                    </Link>
+                                    </div>
+                                </Link>
 
-                                    {hoverIndex === index && (
-                                        <div className="mensagemDoc show">
-                                            <p className="tituloMensagem">Anotações:</p>
-                                            <p>{doc.anotacao || "Mensagem escrita pelo proprietário..."}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))
-                        ) : (
-                            <p>Nenhum documento encontrado.</p>
+                                    { hoverIndex === index && (
+                                    <div className="mensagemDoc show">
+                                        <p className="tituloMensagem">Anotações:</p>
+                                        <p>{doc.anotacao || "Mensagem escrita pelo proprietário..."}</p>
+                                    </div>
+                                )}
+                    </div>
+                    ))
+                    ) : (
+                    <p>Nenhum documento encontrado.</p>
                         )}
-                    </section>
                 </section>
-            </main>
-        </div>
+            </section>
+        </main>
+        </div >
     );
 }

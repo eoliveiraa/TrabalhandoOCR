@@ -32,7 +32,6 @@ namespace CollabTechFile.Repositories
                 doc.Nome = documento.Nome ?? doc.Nome;
                 doc.Prazo = documento.Prazo ?? doc.Prazo;
 
-                // ✅ Atualiza PDF se enviado
                 if (documento.Arquivo != null && documento.Arquivo.Length > 0)
                     doc.Arquivo = documento.Arquivo;
 
@@ -41,9 +40,18 @@ namespace CollabTechFile.Repositories
 
                 doc.Status = documento.Status;
 
+                // ⭐ Campos que estavam faltando:
+                doc.TextoOcr = documento.TextoOcr ?? doc.TextoOcr;
+                doc.Versao = documento.Versao;
+                doc.VersaoAtual = documento.VersaoAtual;
+                doc.AssinadoEm = documento.AssinadoEm ?? doc.AssinadoEm;
+                doc.FinalizadoEm = documento.FinalizadoEm ?? doc.FinalizadoEm;
+                doc.NovoStatus = documento.NovoStatus ?? doc.NovoStatus;
+
                 _context.SaveChanges();
             }
         }
+
 
         public void Deletar(int id)
         {
@@ -79,7 +87,7 @@ namespace CollabTechFile.Repositories
                 .ToList();
         }
 
-        // BUSCAR POR ID (retorna PDF)
+        //BUSCAR POR ID(retorna PDF)
         public Documento BuscarPorId(int id)
         {
             return _context.Documentos
@@ -89,3 +97,39 @@ namespace CollabTechFile.Repositories
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

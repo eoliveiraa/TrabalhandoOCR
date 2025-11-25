@@ -7,11 +7,11 @@ namespace CollabTechFile.DTO
         public int IdUsuario { get; set; }
         public int Prazo { get; set; }
         public bool Status { get; set; }
-        public string? Versao { get; set; }
+        public decimal Versao { get; set; }
         public DateTime CriadoEm { get; set; }
         public int IdEmpresa { get; set; }
 
-        public IFormFile? Arquivo { get; set; }
+      public IFormFile? Arquivo { get; set; }
 
     }
 }

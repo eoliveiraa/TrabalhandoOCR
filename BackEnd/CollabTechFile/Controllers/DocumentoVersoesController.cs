@@ -18,22 +18,6 @@ namespace CollabTechFile.Controllers
             _documentoVersoesRepository = documentoVersoesRepository;
         }
 
-        [HttpPost]
-        public IActionResult Post([FromBody] DocumentoVersoes versao)
-        {
-            try
-            {
-                if (versao == null)
-                    return BadRequest("Os dados da versão não foram enviados.");
-
-                _documentoVersoesRepository.Cadastrar(versao);
-                return StatusCode(201, versao);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro ao cadastrar versão: {ex.Message}");
-            }
-        }
 
         [HttpGet]
         public IActionResult Get()

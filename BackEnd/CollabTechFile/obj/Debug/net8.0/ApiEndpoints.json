@@ -63,7 +63,60 @@
   },
   {
     "ContainingType": "CollabTechFile.Controllers.DocumentosController",
-    "Method": "DownloadPdf",
+    "Method": "Post",
+    "RelativePath": "api/Documentos",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "documento",
+        "Type": "CollabTechFile.Models.Documento",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CollabTechFile.Controllers.DocumentosController",
+    "Method": "EditarOcr",
+    "RelativePath": "api/Documentos/{id}/editar-ocr",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "CollabTechFile.Controllers.DocumentosController\u002BEditarTextoDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CollabTechFile.Controllers.DocumentosController",
+    "Method": "ObterTextoOcr",
+    "RelativePath": "api/Documentos/{id}/ocr",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CollabTechFile.Controllers.DocumentosController",
+    "Method": "ObterPdf",
     "RelativePath": "api/Documentos/{id}/pdf",
     "HttpMethod": "GET",
     "IsController": true,
@@ -109,6 +162,37 @@
       {
         "Name": "arquivo",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CollabTechFile.Controllers.DocumentosController",
+    "Method": "CadastrarComOcr",
+    "RelativePath": "api/Documentos/cadastrar-com-ocr",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "arquivo",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "IdUsuario",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "Nome",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "IdEmpresa",
+        "Type": "System.Int32",
         "IsRequired": false
       }
     ],
@@ -202,7 +286,7 @@
       },
       {
         "Name": "Versao",
-        "Type": "System.String",
+        "Type": "System.Decimal",
         "IsRequired": false
       },
       {
@@ -219,22 +303,6 @@
         "Name": "Arquivo",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
         "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CollabTechFile.Controllers.DocumentoVersoesController",
-    "Method": "Post",
-    "RelativePath": "api/DocumentoVersoes",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "versao",
-        "Type": "CollabTechFile.Models.DocumentoVersoes",
-        "IsRequired": true
       }
     ],
     "ReturnTypes": []

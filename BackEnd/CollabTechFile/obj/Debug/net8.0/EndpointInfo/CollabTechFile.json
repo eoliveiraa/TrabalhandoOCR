@@ -91,6 +91,35 @@
             "description": "OK"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Documentos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Documento"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Documento"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Documento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/Documentos/Lixeira": {
@@ -174,38 +203,6 @@
         }
       }
     },
-    "/api/Documentos/analisar": {
-      "post": {
-        "tags": [
-          "Documentos"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "arquivo": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "arquivo": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/Documentos/upload-ocr": {
       "post": {
         "tags": [
@@ -232,7 +229,8 @@
                     "type": "boolean"
                   },
                   "Versao": {
-                    "type": "string"
+                    "type": "number",
+                    "format": "double"
                   },
                   "CriadoEm": {
                     "type": "string",
@@ -307,6 +305,103 @@
         }
       }
     },
+    "/api/Documentos/{id}/ocr": {
+      "get": {
+        "tags": [
+          "Documentos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Documentos/analisar": {
+      "post": {
+        "tags": [
+          "Documentos"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "arquivo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "arquivo": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Documentos/{id}/editar-ocr": {
+      "put": {
+        "tags": [
+          "Documentos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarTextoDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarTextoDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarTextoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Documentos/{id}/upload": {
       "put": {
         "tags": [
@@ -350,26 +445,47 @@
         }
       }
     },
-    "/api/DocumentoVersoes": {
+    "/api/Documentos/cadastrar-com-ocr": {
       "post": {
         "tags": [
-          "DocumentoVersoes"
+          "Documentos"
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/DocumentoVersoes"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentoVersoes"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentoVersoes"
+                "type": "object",
+                "properties": {
+                  "arquivo": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "IdUsuario": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Nome": {
+                    "type": "string"
+                  },
+                  "IdEmpresa": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "arquivo": {
+                  "style": "form"
+                },
+                "IdUsuario": {
+                  "style": "form"
+                },
+                "Nome": {
+                  "style": "form"
+                },
+                "IdEmpresa": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -379,7 +495,9 @@
             "description": "OK"
           }
         }
-      },
+      }
+    },
+    "/api/DocumentoVersoes": {
       "get": {
         "tags": [
           "DocumentoVersoes"
@@ -1191,6 +1309,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "idEmpresa": {
+            "type": "integer",
+            "format": "int32"
+          },
           "idUsuario": {
             "type": "integer",
             "format": "int32",
@@ -1217,6 +1339,10 @@
           "arquivo": {
             "type": "string",
             "format": "byte",
+            "nullable": true
+          },
+          "textoOcr": {
+            "type": "string",
             "nullable": true
           },
           "mimeType": {
@@ -1297,6 +1423,16 @@
           "numeroVersao": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditarTextoDTO": {
+        "type": "object",
+        "properties": {
+          "texto": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

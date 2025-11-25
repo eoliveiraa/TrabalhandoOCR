@@ -11,15 +11,15 @@ import DocAndamentoFunc from "../pages/docAndamentoFunc/DocAndamentoFunc";
 import DocAndamentoClie from "../pages/docAndamentoClie/DocAndamentoClie";
 import InicioCliente from "../pages/inicioCliente/InicioCliente";
 import FaleConosco from "../pages/faleConosco/FaleConosco";
-import VisualizarDoc from "../pages/visualizarDoc/Visualizar";
 import DocFinalizadoClie from "../pages/docFinalizadoClie/docFinalizadoClie";
 import DocFinalizadoFunc from "../pages/docFinalizadoFunc/DocFinalizadoFunc";
 import ListagemFuncionario from "../pages/listagemFuncionario/listagemFuncionario";
 import UploadOCR from "../pages/UploadOCR/UploadOCR";
-
+import VisualizarDoc from "../pages/visualizarDoc/VisualizarDoc"
 const Rotas = () => {
     return (
         <Routes>
+            <Route element={<VisualizarDoc/>} path="/documento/:id"/>
             <Route element={<UploadOCR />} path="/ocr" />
             <Route element={<Login />} path="/" exact />
             <Route element={<Inicio />} path="/Inicio" />
@@ -34,7 +34,6 @@ const Rotas = () => {
             <Route element={<InicioCliente />} path="/InicioCliente" />
             <Route element={<DocFinalizadoClie />} path="/docFinalizadoClie" />
             <Route element={<DocFinalizadoFunc />} path="/docFinalizadoFunc" />
-            <Route element={<VisualizarDoc />} path="/VisualizarDoc" />
             <Route element={<DocAndamentoFunc />} path="/docAndamentoFunc/:nomeDocumento/:idDocumento" />
             <Route element={<DocAndamentoClie />} path="/DocAndamentoClie/:nomeDocumento/:idDocumento" />
         </Routes>
