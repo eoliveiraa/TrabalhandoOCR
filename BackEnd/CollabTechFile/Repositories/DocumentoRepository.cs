@@ -65,26 +65,91 @@ namespace CollabTechFile.Repositories
 
         public List<Documento> Listar()
         {
-            return _context.Documentos
-                .AsNoTracking()
-                .Include(d => d.IdUsuarioNavigation)
-                .Select(d => new Documento
-                {
-                    IdDocumento = d.IdDocumento,
-                    Nome = d.Nome,
-                    Prazo = d.Prazo,
-                    Status = d.Status,
-                    Versao = d.Versao,
-                    VersaoAtual = d.VersaoAtual,
-                    CriadoEm = d.CriadoEm,
-                    NovoStatus = d.NovoStatus,
-                    AssinadoEm = d.AssinadoEm,
-                    FinalizadoEm = d.FinalizadoEm,
-                    IdUsuario = d.IdUsuario,
-                    IdUsuarioNavigation = d.IdUsuarioNavigation,
-                    // NÃO retorna Arquivo (evita payload gigante)
-                })
-                .ToList();
+            //return _context.Documentos
+            //    .AsNoTracking()
+            //    .Include(d => d.IdUsuarioNavigation)
+            //    .Select(d => new Documento
+            //    {
+            //        IdDocumento = d.IdDocumento,
+            //        Nome = d.Nome,
+            //        Prazo = d.Prazo,
+            //        Status = d.Status,
+            //        Versao = d.Versao,
+            //        VersaoAtual = d.VersaoAtual,
+            //        CriadoEm = d.CriadoEm,
+            //        NovoStatus = d.NovoStatus,
+            //        AssinadoEm = d.AssinadoEm,
+            //        FinalizadoEm = d.FinalizadoEm,
+            //        IdUsuario = d.IdUsuario,
+            //        IdUsuarioNavigation = d.IdUsuarioNavigation,
+            //        // NÃO retorna Arquivo (evita payload gigante)
+            //    })
+            //    .ToList();
+
+         return _context.Documentos
+         .AsNoTracking()
+         .Include(d => d.IdUsuarioNavigation)
+         .Include(d => d.ReqDocs)
+             .ThenInclude(rd => rd.IdRequisitoNavigation)
+         .Include(d => d.RegrasDocs)
+             .ThenInclude(rg => rg.IdRegrasNavigation)
+         .Select(d => new Documento
+         {
+             IdDocumento = d.IdDocumento,
+             IdEmpresa = d.IdEmpresa,
+             IdUsuario = d.IdUsuario,
+
+             Nome = d.Nome,
+             Prazo = d.Prazo,
+             Status = d.Status,
+             Versao = d.Versao,
+             VersaoAtual = d.VersaoAtual,
+             CriadoEm = d.CriadoEm,
+             NovoStatus = d.NovoStatus,
+             AssinadoEm = d.AssinadoEm,
+             FinalizadoEm = d.FinalizadoEm,
+             MimeType = d.MimeType,
+             TextoOcr = d.TextoOcr,
+
+             IdUsuarioNavigation = d.IdUsuarioNavigation,
+
+             // Mapeia ReqDocs e a entidade Requisito vinculada
+             ReqDocs = d.ReqDocs.Select(rd => new ReqDoc
+             {
+                 IdReqDoc = rd.IdReqDoc,
+                 IdDocumento = rd.IdDocumento,
+                 IdRequisito = rd.IdRequisito,
+                 // mapa a navegação do requisito
+                 IdRequisitoNavigation = rd.IdRequisitoNavigation == null
+                     ? null
+                     : new Requisito
+                     {
+                         IdRequisito = rd.IdRequisitoNavigation.IdRequisito,
+                         Tipo = rd.IdRequisitoNavigation.Tipo,
+                         TextoReq = rd.IdRequisitoNavigation.TextoReq
+                     }
+             }).ToList(),
+
+             // Mapeia RegrasDocs e a entidade Regra vinculada
+             RegrasDocs = d.RegrasDocs.Select(rg => new RegrasDoc
+             {
+                 IdRegrasDoc = rg.IdRegrasDoc,
+                 IdDocumento = rg.IdDocumento,
+                 IdRegras = rg.IdRegras,
+                 // mapa a navegação da regra
+                 IdRegrasNavigation = rg.IdRegrasNavigation == null
+                     ? null
+                     : new Regra
+                     {
+                         IdRegras = rg.IdRegrasNavigation.IdRegras,
+                         Nome = rg.IdRegrasNavigation.Nome
+                     }
+             }).ToList(),
+
+             // NÃO retorna o PDF para não pesar a resposta
+             Arquivo = null
+         })
+         .ToList();
         }
 
         //BUSCAR POR ID(retorna PDF)

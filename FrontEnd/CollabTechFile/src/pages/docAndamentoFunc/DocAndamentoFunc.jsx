@@ -61,6 +61,13 @@ export default function DocAndamentoFunc() {
     const [reqNaoFuncional] = useState("RNF")
     const [reqNaoFuncionalText] = useState("Edite seu Requisito não Funcional.")
 
+
+    //sasa
+    const [documentosListados, setdocumentosListados] = useState([]);
+    const [reqFuncionais, setReqFuncionais] = useState([]);
+    const [reqNaoFuncionais, setReqNaoFuncionais] = useState([]);
+
+
     function alertar(icone, mensagem) {
         const Toast = Swal.mixin({
             theme: 'dark',
@@ -227,8 +234,6 @@ export default function DocAndamentoFunc() {
             alertar("error", "Erro ao atualizar a regra!");
         }
     }
-
-
     //Requisito Funcional
     async function listarReqFunc() {
         try {
@@ -277,7 +282,6 @@ export default function DocAndamentoFunc() {
             console.log(error);
         }
     }
-
     //Requisito Não Funcional
     async function listarReqNaoFunc() {
         try {
@@ -350,13 +354,46 @@ export default function DocAndamentoFunc() {
             }
         });
     }
+    async function listarDocumento() {
+        try {
+            const todosDocumentos = await api.get("/Documentos");
+            const dados = todosDocumentos.data;
+
+            setdocumentosListados(dados); // Salva o array principal
+            // console.log(todosDocumentos.data);
+
+            // Se você está lidando com um array de UM documento (como o seu console.log sugere)
+            if (dados.length > 0) {
+                const doc = dados[0]; // Pega o primeiro documento
+
+                // 🎯 Filtra os requisitos
+                const funcionais = doc.reqDocs.filter(req =>
+                    req.idRequisitoNavigation.tipo &&
+                    req.idRequisitoNavigation.tipo.toUpperCase().startsWith('RF') &&
+                    !req.idRequisitoNavigation.tipo.toUpperCase().includes('RNF')
+                );
+
+                const naoFuncionais = doc.reqDocs.filter(req =>
+                    req.idRequisitoNavigation.tipo &&
+                    req.idRequisitoNavigation.tipo.toUpperCase().startsWith('RNF')
+                );
+
+                setReqFuncionais(funcionais);
+                setReqNaoFuncionais(naoFuncionais);
+            }
+        } catch (error) {
+            console.log("Deu erro!")
+        }
+    }
 
     useEffect(() => {
-        listarCliente();
-        listarVersoes();
-        listarRN();
-        listarReqFunc();
-        listarReqNaoFunc();
+        // listarCliente();
+        // listarVersoes();
+        // listarRN();
+        // listarReqFunc();
+        // listarReqNaoFunc();
+
+        listarDocumento();
     }, [])
 
     return (
@@ -380,7 +417,6 @@ export default function DocAndamentoFunc() {
                             <div className="nomeDoc">
                                 <p>Nome: <span>{nomeCorrigido || "Carregando..."}</span></p>
                             </div>
-
                             <div className="infDocumento">
                                 <div className="botaoFiltrarVersoesDoc">
                                     <p>Versão Documento</p>
@@ -430,25 +466,32 @@ export default function DocAndamentoFunc() {
                                 </div>
 
                                 <section>
-                                    {listaRN.length > 0 ? (
-                                        listaRN.map((regra, index) => (
-                                            <div className="listaRN" key={regra.idRegrasDoc}>
-                                                <p>RN{String(index + 1).padStart(2, "0")}: <span>{regra.nome}</span></p>
-                                                <div className="iconeRequisitosERegra">
-                                                    <img
-                                                        onClick={() => deletarRN(regra)}
-                                                        className="botaoExcluir"
-                                                        src={Deletar}
-                                                        alt="Lixeira"
-                                                    />
-                                                    <img
-                                                        onClick={() => editarRN(regra)}
-                                                        className="botaoEditar"
-                                                        src={Editar}
-                                                        alt="Caneta de Editar"
-                                                    />
+                                    {documentosListados.length > 0 ? (
+                                        documentosListados.map((doc, index) => (
+                                            doc.regrasDocs.map((regra) => (
+                                                <div className="listaRN" key={regra.idRegrasDoc}>
+                                                    <p>RN{String(index + 1).padStart(2, "0")}: <span>
+                                                        <li key={regra.idRegrasDoc}>
+                                                            {regra.idRegrasNavigation.nome}
+                                                        </li>
+                                                    </span></p>
+                                                    <div className="iconeRequisitosERegra">
+                                                        <img
+                                                            onClick={() => deletarRN(doc)}
+                                                            className="botaoExcluir"
+                                                            src={Deletar}
+                                                            alt="Lixeira"
+                                                        />
+                                                        <img
+                                                            onClick={() => editarRN(doc)}
+                                                            className="botaoEditar"
+                                                            src={Editar}
+                                                            alt="Caneta de Editar"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ))
+
                                         ))
                                     ) : (
                                         <div className="listaRN">
@@ -468,13 +511,12 @@ export default function DocAndamentoFunc() {
                                 </div>
 
                                 <section>
-                                    {listaReqFunc.length > 0 ? (
-                                        listaReqFunc.map((rnf, index) => (
-                                            <div className="listaRF" key={rnf.idRequisito}>
-                                                <p>RNF{String(index + 1).padStart(2, "0")}: <span>{rnf.textoReq}</span></p>
-
+                                    {reqFuncionais.length > 0 ? (
+                                        reqFuncionais.map((rf, index) => ( // Usando 'rf' para clareza
+                                            <div className="listaRF" key={rf.idReqDoc}>
+                                                <p>RF{String(index + 1).padStart(2, "0")}: <span>{rf.idRequisitoNavigation.textoReq}</span></p>
                                                 <div className="iconeRequisitosERegra">
-                                                    <img onClick={() => deletarReqNaoFunc(rnf)} className="botaoExcluir" src={Deletar} alt="Lixeira" />
+                                                    <img onClick={() => deletarReqNaoFunc(rf)} className="botaoExcluir" src={Deletar} alt="Lixeira" />
                                                     <img className="botaoEditar" src={Editar} alt="Caneta de Editar" />
                                                 </div>
                                             </div>
@@ -497,10 +539,10 @@ export default function DocAndamentoFunc() {
                                 </div>
 
                                 <section>
-                                    {listaReqNaoFunc.length > 0 ? (
-                                        listaReqNaoFunc.map((rnf, index) => (
-                                            <div className="listaRNF" key={rnf.idRequisito}>
-                                                <p>RNF{String(index + 1).padStart(2, "0")}: <span>{rnf.textoReq}</span></p>
+                                    {reqNaoFuncionais.length > 0 ? (
+                                        reqNaoFuncionais.map((rnf, index) => ( // Usando 'rnf' para clareza
+                                            <div className="listaRNF" key={rnf.idReqDoc}>
+                                                <p>RNF{String(index + 1).padStart(2, "0")}: <span>{rnf.idRequisitoNavigation.textoReq}</span></p>
 
                                                 <div className="iconeRequisitosERegra">
                                                     <img onClick={() => deletarReqNaoFunc(rnf)} className="botaoExcluir" src={Deletar} alt="Lixeira" />
