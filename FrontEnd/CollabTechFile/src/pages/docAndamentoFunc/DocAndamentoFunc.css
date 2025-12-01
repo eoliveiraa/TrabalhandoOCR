@@ -2,6 +2,11 @@
     text-align: center;
 }
 
+.PDFeVersao {
+    display: flex;
+    justify-content: space-between;
+}
+
 .abrirDoc {
     display: flex;
     align-items: center;
@@ -39,12 +44,14 @@
 .infDocumento {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4%;
+    flex-wrap: wrap;
 }
 
-.botaoFiltrarVersoesDoc,
-.botaoSelectRementente {
-    width: 100%;
+.botaoFiltrarVersoesDoc {
+    display: flex;
+    align-items: center;
+    width: 220px;
+    margin-bottom: 2%;
 }
 
 .botaoFiltrarVersoesDoc p {
@@ -59,97 +66,91 @@
     cursor: pointer;
     font-size: 1.1rem;
     padding: 1%;
-    margin-bottom: 5%;
     background: transparent;
 }
 
-.botaoSelectRementente p {
+.botaoSelectRementente label {
     font-size: 1.5rem;
     font-weight: 600;
 }
 
-.botaoSelectRementente select {
-    width: 80%;
-    border: none;
-    border-bottom: 2px solid black;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 1%;
-    margin-bottom: 5%;
-    background: transparent;
+.botaoSelectRementente {
+    display: flex;
+    align-items: center;
+    width: 200px;
+    margin-bottom: 2%;
+}
+
+.botaoSelectRementente span {
+    font-size: 1.3rem;
+    margin-left: 2%;
+    font-size: 400;
 }
 
 .prazoEntrega {
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 5px;
-    width: 100%;
     margin-bottom: 2%;
-    align-self: center;
-    font-weight: 600;
+    width: 200px;
+}
+
+.prazoEntrega label {
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
-.prazoEntrega input {
-    width: 80%;
-    font-size: 1rem;
+.prazoEntrega span {
+    font-size: 1.3rem;
+    margin-left: 2%;
+    font-size: 400;
+}
+
+.botaoFiltrarVersoesDoc span {
+    font-size: 1.3rem;
+    margin-left: 2%;
+    font-size: 400;
+}
+
+.cadRN {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    width: 70%;
 }
 
-.prazoEntrega input {
+.cadRN input {
     border: none;
-    border-bottom: 2px solid black;
+    border-bottom: 2px solid #001f3f;
     background-color: transparent;
+    height: 40px;
+    width: 100%;
+    margin-right: 3%;
+    font-size: 1.2rem;
 }
 
-.prazoEntrega select:focus {
-    background-color: black;
+.cadRN input:focus {
+    outline: none;
 }
 
 .tituloRN,
 .tituloRF,
 .tituloRNF {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
-.tituloRF,
-.tituloRNF {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 5%;
-}
-
-.tituloRN h2 {
-    font-size: 48px;
-    font-weight: 500;
-}
-
-.tituloRN button {
-    border: none;
-    background: transparent;
-}
-
+.tituloRN h2,
+.tituloRNF h2,
 .tituloRF h2 {
-    font-size: 48px;
+    margin-top: 5%;
+    font-size: 30px;
     font-weight: 500;
 }
 
-.tituloRF button {
-    border: none;
-    background: transparent;
-}
-
-.tituloRNF h2 {
-    font-size: 48px;
-    font-weight: 500;
-}
-
+.tituloRN button,
+.tituloRF button,
 .tituloRNF button {
     border: none;
     background: transparent;
@@ -159,22 +160,29 @@
 .listaRF,
 .listaRNF {
     display: flex;
+    text-align: start;
     justify-content: space-between;
     align-items: center;
+    width: 50%;
 
-    background-color: rgb(88, 129, 163);
-    box-shadow: inset 0px 0px 10px 0 rgba(20, 20, 20, 0.2);
-    color: white;
+    color: black;
+    /* border-bottom: 2px solid black; */
 
-    border-radius: 10px;
-    padding: 2%;
+    font-size: 1.1rem;
+
+    padding: 1%;
     margin-top: 2%;
     width: 100%;
 }
 
-.listaRF p {
-    width: 80%;
-    text-align: start;
+.listaRN p,
+.listaRF p,
+.listaRNF p {
+    width: 90%;
+}
+
+.tagListaRnRnfRf {
+    font-weight: 600;
 }
 
 .iconeRequisitosERegra {
@@ -230,9 +238,10 @@
 
 .areaComentarioDoc {
     width: 100%;
-    border-radius: 20px;
+    /* border-radius: 20px; */
     background-color: aliceblue;
     padding: 2%;
+    margin-top: 4%;
 }
 
 .cardFeedbackDoc {
@@ -270,5 +279,226 @@
     margin: 10px 0 0 0;
     color: #333;
     font-size: 1rem;
-    line-height: 1.5;
+    width: 100%;
+}
+
+.comentarioVazio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* ======== RESPONSIVIDADE GERAL ======== */
+
+/* Tablets (até 1024px) */
+@media (max-width: 1024px) {
+    .infDocumento {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .botaoFiltrarVersoesDoc,
+    .botaoSelectRementente,
+    .prazoEntrega {
+        width: 45%;
+        text-align: center;
+    }
+
+    .tituloRN h2,
+    .tituloRF h2,
+    .tituloRNF h2 {
+        font-size: 36px;
+    }
+
+    .listaRN,
+    .listaRF,
+    .listaRNF {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .iconeRequisitosERegra {
+        width: auto;
+        align-self: flex-end;
+    }
+}
+
+/* Celulares (até 768px) */
+@media (max-width: 768px) {
+    .infDocumento {
+        flex-direction: column;
+        /* align-items: center;
+        gap: 30px; */
+    }
+
+    .botaoFiltrarVersoesDoc,
+    .botaoSelectRementente,
+    .prazoEntrega {
+        width: 90%;
+        font-size: 1rem;
+    }
+
+    .botaoFiltrarVersoesDoc p,
+    .botaoSelectRementente p,
+    .prazoEntrega label {
+        font-size: 1.2rem;
+    }
+
+    .tituloRN h2,
+    .tituloRF h2,
+    .tituloRNF h2 {
+        font-size: 28px;
+        text-align: center;
+    }
+
+    .tituloRN,
+    .tituloRF,
+    .tituloRNF {
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .listaRN,
+    .listaRF,
+    .listaRNF {
+        flex-direction: column;
+        align-items: flex-start;
+        font-size: 0.9rem;
+        padding: 4%;
+    }
+
+    .iconeRequisitosERegra {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .finalizarDoc,
+    .salvarDoc {
+        width: 90%;
+        font-size: 20px;
+    }
+
+    .salvarFinalizarDoc {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+/* Celulares pequenos (até 480px) */
+@media (max-width: 480px) {
+
+    .tituloRN h2,
+    .tituloRF h2,
+    .tituloRNF h2 {
+        font-size: 22px;
+    }
+
+    .botaoFiltrarVersoesDoc select,
+    .botaoSelectRementente select,
+    .prazoEntrega input {
+        width: 100%;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .listaRN p,
+    .listaRF p,
+    .listaRNF p {
+        font-size: 0.9rem;
+    }
+
+    .iconeRequisitosERegra img {
+        height: 28px;
+        width: 28px;
+    }
+}
+
+/* ======== RESPONSIVIDADE COMENTÁRIOS ======== */
+
+/* Tablets até 1024px */
+@media (max-width: 1024px) {
+    .areaComentarioDoc {
+        padding: 3%;
+    }
+
+    .cardFeedbackDoc {
+        padding: 3%;
+    }
+
+    .nomeFeedbackDoc {
+        font-size: 1.2rem;
+    }
+
+    .dataFeedbackDoc,
+    .horarioFeedbackDoc {
+        font-size: 1rem;
+    }
+
+    .mensagemFeedbackDoc {
+        font-size: 0.95rem;
+    }
+}
+
+/* Celulares até 768px */
+@media (max-width: 768px) {
+    .cabecalhoFeedbackDoc {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .nomeFeedbackDoc {
+        font-size: 1.1rem;
+    }
+
+    .horarioDataComentario {
+        align-items: flex-start;
+    }
+
+    .mensagemFeedbackDoc {
+        font-size: 0.9rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+    .cardFeedbackDoc {
+        border-bottom: 1px solid #999;
+        padding: 4%;
+    }
+
+    .titulo h1 {
+        font-size: 30px;
+    }
+
+    .titulo {
+        margin-bottom: 30px;
+    }
+}
+
+/* Celulares pequenos até 480px */
+@media (max-width: 480px) {
+    .areaComentarioDoc {
+        padding: 4%;
+    }
+
+    .nomeFeedbackDoc {
+        font-size: 1rem;
+    }
+
+    .dataFeedbackDoc,
+    .horarioFeedbackDoc {
+        font-size: 0.9rem;
+    }
+
+    .mensagemFeedbackDoc {
+        font-size: 0.85rem;
+        word-break: break-word;
+    }
 }

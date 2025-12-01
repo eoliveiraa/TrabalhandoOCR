@@ -1,109 +1,167 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import "./MenuLateral.css";
 import LogoMenu from "../../assets/img/logoMenu.png";
 import Casinha from "../../assets/img/Casinha.png";
 import Documents from "../../assets/img/Documents.png";
-import Cliente from "../../assets/img/Cliente.png";
-import Cadastrar from "../../assets/img/Cadastrar.png";
-import FeedBack from "../../assets/img/Feedback.png";
+import Cliente from "../../assets/img/Cliente.png"; 
+import Cadastrar from "../../assets/img/Cadastrar.png"; 
 import Logout from "../../assets/img/Logout.png";
 import MenuHb from "../../assets/img/Menu.png";
 import fonezinho from "../../assets/img/fone.png";
-
-const acesso = "funcionario"; // ou "cliente", se quiser trocar
+import { useAuth } from "../../contexts/AuthContext";
+import secureLocalStorage from "react-secure-storage";
+import { userDecodeToken } from "../../auth/Auth";
 
 export default function MenuLateral() {
-  const [menuAberto, setMenuAberto] = useState(false);
+    const [menuAberto, setMenuAberto] = useState(false);
+    const [cadastrosAbertos, setCadastrosAbertos] = useState(false);
+    const [listagensAbertas, setListagensAbertas] = useState(false); 
 
-  const handleLogout = () => {
-    console.log("Usuário deslogado"); // aqui tu coloca tua função real de logout
-  };
+    const { logout } = useAuth();
+    const [usuario, setUsuario] = useState(null);
 
-  return (
-    <>
-      {/* Botão hamburguer (mobile) */}
-      <button className="menuHb" onClick={() => setMenuAberto(!menuAberto)}>
-        <img src={MenuHb} alt="Abrir menu" />
-      </button>
+    useEffect(() => {
+        const token = secureLocalStorage.getItem("token");
+        const dadosUsuario = userDecodeToken(token);
+        setUsuario(dadosUsuario);
+    }, []);
 
-      {/* Sidebar */}
-      <header className={`menuLateral ${menuAberto ? "ativo" : ""}`}>
-        <img src={LogoMenu} alt="Logo CollabTech Menu" className="logoMenu" />
+    const handleLogout = () => {
+        logout();
+        setMenuAberto(false);
+        setCadastrosAbertos(false);
+        setListagensAbertas(false); 
+    };
 
-        {/* Se for funcionário */}
-        {acesso === "funcionario" ? (
-          <div className="linksLateral">
-            <Link
-              to="/Inicio"
-              className="links"
-              onClick={() => setMenuAberto(false)}
+    const handleLinkClick = () => {
+        setMenuAberto(false);
+    };
+    
+    const closeMenu = () => {
+        setMenuAberto(false);
+        setCadastrosAbertos(false);
+        setListagensAbertas(false); 
+    };
+
+    const linksDeNavegacao = useMemo(() => {
+        const linksCliente = [
+            { to: "/InicioCliente", icon: Casinha, alt: "Início", text: "Início" },
+            { to: "/FaleConosco", icon: fonezinho, alt: "Fale Conosco", text: "Fale Conosco" },
+        ];
+
+        const linksFuncionario = [
+            { to: "/Inicio", icon: Casinha, alt: "Início", text: "Início" },
+            { to: "/Listagem", icon: Documents, alt: "Documentos", text: "Documentos" },
+        ];
+
+        const subLinksCadastros = [
+            { to: "/CadastroEmpresa", icon: Cadastrar, alt: "Cadastrar Empresa", text: "Cadastrar Empresa" },
+            { to: "/CadastroFuncionario", icon: Cadastrar, alt: "Cadastrar Funcionário", text: "Cadastrar Funcionários" },
+            { to: "/CadastroCliente", icon: Cadastrar, alt: "Cadastrar Cliente", text: "Cadastrar Clientes" },
+        ];
+
+        const subLinksListagens = [
+            { to: "/listagemFuncionario", icon: Cliente, alt: "Listar Funcionários", text: "Listar Funcionários" },
+            { to: "/TelaCliente", icon: Cliente, alt: "Clientes", text: "Clientes" },
+        ];
+
+
+        const linksAdministrador = [
+            { type: "submenu", text: "Cadastros", icon: Cadastrar, sublinks: subLinksCadastros, state: cadastrosAbertos, setState: setCadastrosAbertos },
+            
+            { type: "submenu", text: "Listagens", icon: Documents, sublinks: subLinksListagens, state: listagensAbertas, setState: setListagensAbertas },
+        ];
+
+        return { linksCliente, linksFuncionario, linksAdministrador };
+    }, [cadastrosAbertos, listagensAbertas]); 
+
+    const tipoUsuario = usuario?.tipoUsuario;
+
+    let linksParaExibir = [];
+
+    if (tipoUsuario === "Cliente") {
+        linksParaExibir = linksDeNavegacao.linksCliente;
+    } else if (tipoUsuario === "Funcionario") {
+        linksParaExibir = linksDeNavegacao.linksFuncionario;
+    } else if (tipoUsuario === "Administrador") {
+        linksParaExibir = [
+            ...linksDeNavegacao.linksFuncionario, 
+            ...linksDeNavegacao.linksAdministrador
+        ];
+    }
+
+    const renderSubmenu = (link, index) => (
+        <div key={index} className="submenuContainer">
+            <button 
+                className={`links ${link.state ? "ativo" : ""}`}
+                onClick={() => link.setState(!link.state)}
             >
-              <img src={Casinha} alt="Casinha" />
-              Início
-            </Link>
+                <img src={link.icon} alt={link.alt || link.text} />
+                {link.text}
+            </button>
+            
+            {link.state && (
+                <div className="sublinks">
+                    {link.sublinks.map((sublink, subIndex) => (
+                        <Link
+                            key={subIndex}
+                            to={sublink.to}
+                            className="sublinkItem"
+                            onClick={handleLinkClick}
+                        >
+                            <img src={sublink.icon} alt={sublink.alt} />
+                            {sublink.text}
+                        </Link>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
-            <Link
-              to="/CadastroCliente"
-              className="links"
-              onClick={() => setMenuAberto(false)}
-            >
-              <img src={Cadastrar} alt="Usuário" />
-              Cadastrar Clientes
-            </Link>
+    return (
+        <>
+            <button className="menuHb" onClick={() => setMenuAberto(!menuAberto)}>
+                <img src={MenuHb} alt="Abrir menu" />
+            </button>
 
-            <Link
-              to="/Listagem"
-              className="links"
-              onClick={() => setMenuAberto(false)}
-            >
-              <img src={Documents} alt="Documentos" />
-              Documentos
-            </Link>
+            <header className={`menuLateral ${menuAberto ? "ativo" : ""}`}>
+                <img src={LogoMenu} alt="Logo CollabTech Menu" className="logoMenu" />
 
-            <Link
-              to="/TelaCliente"
-              className="links"
-              onClick={() => setMenuAberto(false)}
-            >
-              <img src={Cliente} alt="Clientes" />
-              Clientes
-            </Link>
-          </div>
-        ) : (
-          // Se for cliente
-          <div className="linksLateral">
-            <Link
-              to="/InicioCliente"
-              className="links"
-              onClick={() => setMenuAberto(false)}
-            >
-              <img src={Casinha} alt="Casinha" />
-              Início
-            </Link>
+                <div className="linksLateral">
+                    {linksParaExibir.map((link, index) => {
+                        if (link.type === "submenu") {
+                            return renderSubmenu(link, index);
+                        }
 
-            <Link
-              to="/FaleConosco"
-              className="links"
-              onClick={() => setMenuAberto(false)}
-            >
-              <img src={fonezinho} alt="fonezinho" />
-              Fale Conosco
-            </Link>
-          </div>
-        )}
+                        return (
+                            <Link
+                                key={index}
+                                to={link.to}
+                                className="links"
+                                onClick={handleLinkClick}
+                            >
+                                <img src={link.icon} alt={link.alt} />
+                                {link.text}
+                            </Link>
+                        );
+                    })}
 
-        {/* Botão de logout */}
-        <Link to="/" className="logout" onClick={handleLogout}>
-          <img src={Logout} alt="Logout" />
-          Sair
-        </Link>
-      </header>
+                    {linksParaExibir.length === 0 && tipoUsuario && (
+                        <p className="alertaMenu">Menu não configurado para o tipo "{tipoUsuario}"</p>
+                    )}
 
-      {/* Fundo escuro pra fechar o menu ao clicar fora */}
-      {menuAberto && (
-        <div className="overlay" onClick={() => setMenuAberto(false)} />
-      )}
-    </>
-  );
+                </div>
+
+                <button className="logout" onClick={handleLogout}>
+                    <img src={Logout} alt="Logout" />
+                    Sair
+                </button>
+            </header>
+
+            {menuAberto && (
+                <div className="overlay" onClick={closeMenu} />
+            )}
+        </>
+    );
 }

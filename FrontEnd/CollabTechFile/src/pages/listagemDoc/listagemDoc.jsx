@@ -1,7 +1,7 @@
 import "./ListagemDoc.css";
 import api from "../../services/Service";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import MenuLateral from "../../components/menuLateral/MenuLateral";
 import Cabecalho from "../../components/cabecalho/Cabecalho";
@@ -10,28 +10,69 @@ import Editar from "../../assets/img/Editar.png";
 import Excluir from "../../assets/img/Delete.svg";
 import Swal from "sweetalert2";
 
-
-
 export default function ListagemDoc() {
-
     const [listagemDoc, setListagemDoc] = useState([]);
     const [hoverIndex, setHoverIndex] = useState(null);
     const [filtro, setFiltro] = useState("Todos");
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // SIMULAÇÃO DO USUÁRIO LOGADO - Substitua pela sua lógica real
+    const [usuarioLogado, setUsuarioLogado] = useState({ 
+        id: 1, 
+        papel: "Admin" // Mude para 'Funcionario' ou 'Cliente' para testar
+    }); 
+    // FIM SIMULAÇÃO
+
+    const params = new URLSearchParams(location.search);
+    const statusFiltro = params.get("status");
 
     async function listarDocumentos() {
         try {
-            const resposta = await api.get("Documentos");
-            setListagemDoc(resposta.data);
-            console.log(resposta.data);
+            const [respDocumentos, respVersoes] = await Promise.all([
+                api.get("Documentos"),
+                api.get("documentoVersoes")
+            ]);
+
+            let documentos = respDocumentos.data;
+            const versoes = respVersoes.data;
+
+            const papel = usuarioLogado.papel;
+            const idUsuario = usuarioLogado.id;
+
+            if (papel === "Funcionario") {
+                documentos = documentos.filter(doc => doc.idUsuario === idUsuario);
+            }
+
+            const ultimaMensagemPorDocumento = versoes.reduce((acc, versao) => {
+                const idDoc = versao.idDocumento;
+
+                if (!acc[idDoc] || versao.idDocumentoVersoes > acc[idDoc].idDocumentoVersoes) {
+                    if (versao.mensagem && versao.mensagem.trim() !== '') {
+                        acc[idDoc] = {
+                            mensagem: versao.mensagem,
+                            idDocumentoVersoes: versao.idDocumentoVersoes
+                        };
+                    }
+                }
+                return acc;
+            }, {});
+
+
+            const documentosComAnotacao = documentos.map(doc => {
+                const ultimaAnotacao = ultimaMensagemPorDocumento[doc.idDocumento];
+                return {
+                    ...doc,
+                    anotacao: ultimaAnotacao ? ultimaAnotacao.mensagem : doc.anotacao
+                };
+            });
+
+            setListagemDoc(documentosComAnotacao);
         } catch (error) {
-            console.error("Erro ao listar documentos:", error);
+            console.error("Erro ao listar documentos ou versões:", error);
         }
     }
 
-
-
-
-    // Função para excluir documento (vai para lixeira)
     async function excluirDocumento(id) {
         Swal.fire({
             title: "Excluir documento?",
@@ -44,24 +85,65 @@ export default function ListagemDoc() {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.preventDefault(`/Documentos/${id.idDocumento}`);
+                    // MUDANÇA: Usando 'api.delete' para excluir ou arquivar
+                    await api.put(`/Documentos/${id.idDocumento}`); 
                     Swal.fire("Excluído!", "O documento foi enviado para a lixeira.", "success");
                     listarDocumentos();
                 } catch (error) {
                     console.error("Erro ao excluir:", error);
-                    Swal.fire("Erro!", "Não foi possível excluir o documento.", "error");
+                    alertar("error" )
                 }
             }
         });
     }
+
+    const podeEditarOuExcluir = (doc) => {
+        const papel = usuarioLogado.papel;
+        const idUsuario = usuarioLogado.id;
+
+        if (papel === "Admin") {
+            return true;
+        }
+        
+        if (papel === "Funcionario") {
+            return doc.idUsuario === idUsuario; 
+        }
+
+        return false;
+    };
+
+    let documentosFiltrados = listagemDoc;
+
+    if (filtro === "Em Andamento") {
+        documentosFiltrados = listagemDoc.filter((d) => d.novoStatus === "Em Andamento");
+    } else if (filtro === "Assinados") {
+        documentosFiltrados = listagemDoc.filter((d) => d.novoStatus === "Assinados");
+    } else if (filtro === "Finalizados") {
+        documentosFiltrados = listagemDoc.filter((d) => d.novoStatus === "Finalizados");
+    }
+
+    const tituloPagina = filtro === "Em Andamento"
+        ? "Documentos Em Andamento"
+        : filtro === "Assinados"
+            ? "Documentos Assinados"
+            : filtro === "Finalizados"
+                ? "Documentos Finalizados"
+                : "Todos os Documentos"
+        ;
+
+    function limparFiltro() {
+        setFiltro("Todos");
+        navigate("/Listagem");
+    }
+
     useEffect(() => {
         listarDocumentos();
-    }, []);
 
-    const documentosFiltrados = listagemDoc.filter((doc) => { //Serve para filtrar os documentos na base do filtro
-        if (filtro === "Todos") return true;
-        return doc.status === filtro;
-    });
+        if (statusFiltro === "pendente") setFiltro("Em Andamento");
+        else if (statusFiltro === "assinado") setFiltro("Assinados");
+        else if (statusFiltro === "finalizado") setFiltro("Finalizados");
+        else setFiltro("Todos");
+    }, [statusFiltro, usuarioLogado.id, usuarioLogado.papel]); // Adicionado dependências do usuário
 
     return (
         <div className="containerGeral">
@@ -71,7 +153,7 @@ export default function ListagemDoc() {
                     <Cabecalho />
 
                     <div className="titulo">
-                        <h1>Documentos</h1>
+                        <h1>{tituloPagina}</h1>
                     </div>
 
                     <div className="botaoFiltraLixeira">
@@ -81,10 +163,14 @@ export default function ListagemDoc() {
                                 onChange={(e) => setFiltro(e.target.value)}
                             >
                                 <option value="Todos">Todos</option>
-                                <option value="Pendentes">Pendentes</option>
+                                <option value="Em Andamento">Em Andamento</option>
                                 <option value="Assinados">Assinados</option>
                                 <option value="Finalizados">Finalizados</option>
                             </select>
+
+                            <button className="botaoLimparFiltro" onClick={() => setFiltro("Todos")}>
+                                Limpar Filtro
+                            </button>
                         </div>
 
                         <Link className="botaoLixeiraList" to="/Lixeira">
@@ -102,51 +188,55 @@ export default function ListagemDoc() {
                                     onMouseLeave={() => setHoverIndex(null)}
                                 >
                                     <Link
-                                      to={`/docAndamentoFunc/${encodeURIComponent(doc.nome.replaceAll(" ", "-"))}/${doc.idDocumento}`}
-                                            className="cardDocumento"
+                                        to={`/docAndamentoFunc/${encodeURIComponent(doc.nome.replaceAll(" ", "-"))}/${doc.idDocumento}`}
+                                        className="cardDocumento"
                                     >
-                                    <img src={Pdf} alt="Icone de Pdf" />
-                                    <div className="cardInformacoes">
-                                        <h1>{doc.nome || "Sem título"}</h1>
-                                        <p>Prazo: <span>{new Date(doc.criadoEm).toLocaleDateString('pt-BR') || "Sem data"}</span></p>
-                                        <p>Versão: <span>{doc.versao || "Sem Versão"}</span></p>
-                                        <p>Autor: <span>{doc.idUsuarioNavigation?.nome || "Autor desconhecido"}</span></p>
-                                    </div>
-
-                                    <div className="cardAcoes">
-                                        <div className="infAcoes">
-                                            <img src={Editar} alt="Editar" />
+                                        <img src={Pdf} alt="Icone de Pdf" />
+                                        <div className="cardInformacoes">
+                                            <h1>{doc.nome || "Sem título"}</h1>
+                                            <p>Prazo: <span>{new Date(doc.criadoEm).toLocaleDateString('pt-BR') || "Sem data"}</span></p>
+                                            <p>Versão: <span>{doc.versaoAtual || "Sem Versão"}</span></p>
+                                            <p>Autor: <span>{doc.usuarioNavigation?.nome || "Autor desconhecido"}</span></p>
                                         </div>
 
-                                        <div className="infAcoes">
-                                            <img
-                                                src={Excluir}
-                                                alt="Excluir"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    excluirDocumento(doc.idDocumento);;
-                                                }}
-                                                style={{ cursor: "pointer" }}
-                                            />
-                                        </div>
-                                    </div>
-                                </Link>
+                                        <div className="cardAcoes">
+                                            {podeEditarOuExcluir(doc) && (
+                                                <>
+                                                    <div className="infAcoes">
+                                                        <img src={Editar} alt="Editar" />
+                                                    </div>
 
-                                    { hoverIndex === index && (
-                                    <div className="mensagemDoc show">
-                                        <p className="tituloMensagem">Anotações:</p>
-                                        <p>{doc.anotacao || "Mensagem escrita pelo proprietário..."}</p>
-                                    </div>
-                                )}
-                    </div>
-                    ))
-                    ) : (
-                    <p>Nenhum documento encontrado.</p>
+                                                    <div className="infAcoes">
+                                                        <img
+                                                            src={Excluir}
+                                                            alt="Excluir"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                excluirDocumento({ idDocumento: doc.idDocumento });
+                                                            }}
+                                                            style={{ cursor: "pointer" }}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </Link>
+
+                                    {hoverIndex === index && (
+                                        <div className="mensagemDoc show">
+                                            <p className="tituloMensagem">Anotações:</p>
+                                            <p>{doc.anotacao || "Mensagem escrita pelo proprietário..."}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <p>Nenhum documento encontrado.</p>
                         )}
+                    </section>
                 </section>
-            </section>
-        </main>
-        </div >
+            </main>
+        </div>
     );
 }

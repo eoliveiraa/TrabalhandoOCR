@@ -28,7 +28,7 @@ export default function TelaCliente() {
         setLoading(true);
         try {
             const response = await api.get("usuario");
-            const clientesFiltrados = response.data.filter(usuario => usuario.idTipoUsuario === 3);
+            const clientesFiltrados = response.data.filter(usuario => usuario.idTipoUsuario === 2);
             setClientes(clientesFiltrados);
             // Não definir clientesFiltrados aqui - deixar o useEffect cuidar disso
         } catch (error) {

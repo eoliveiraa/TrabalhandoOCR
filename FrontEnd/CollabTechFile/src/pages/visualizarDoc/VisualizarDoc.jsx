@@ -8,7 +8,7 @@ export default function VisualizarDocumento() {
     const { id } = useParams();
     const [texto, setTexto] = useState("");
     const [nome, setNome] = useState("");
-    const [pdfUrl, setPdfUrl] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState("");
     const [editando, setEditando] = useState(false);
 
     async function carregarDocumento() {
@@ -18,7 +18,6 @@ export default function VisualizarDocumento() {
             setTexto(resposta.data.texto || "");
             setNome(resposta.data.nome);
 
-            // URL do PDF
             setPdfUrl(`${import.meta.env.VITE_API_URL}/Documentos/${id}/pdf`);
 
         } catch (error) {
@@ -52,15 +51,11 @@ export default function VisualizarDocumento() {
             <div className="visualizarDoc-content">
 
                 {/* PDF à esquerda */}
-                {/* {pdfUrl ? (
-                    // <iframe
-                    //     src={pdfUrl}
-                    //     className="pdfViewer"
-                    //     title="Visualização PDF"
-                    // />
-                ) : (
-                    <p>Carregando PDF...</p>
-                )} */}
+                <iframe
+                    src={pdfUrl}
+                    className="pdfViewer"
+                    title="Visualização PDF"
+                />
 
                 {/* OCR à direita */}
                 <div className="textoOcr">

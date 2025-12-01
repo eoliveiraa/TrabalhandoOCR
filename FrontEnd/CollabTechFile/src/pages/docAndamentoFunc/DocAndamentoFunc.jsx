@@ -1,72 +1,41 @@
-import "./docAndamentoFunc.css"
-import MenuLateral from "../../components/menuLateral/MenuLateral";
-import Cabecalho from "../../components/cabecalho/Cabecalho"
+import "./docAndamentoFunc.css";
 import ModalSalvarDocumento from "../../components/salvarDocumento/ModalSalvarDocumento";
+import MenuLateral from "../../components/menuLateral/MenuLateral";
+import Cabecalho from "../../components/cabecalho/Cabecalho";
 import ModalPDF from "../../components/documento/Documento";
-
-
-
-import Adicionar from "../../assets/img/Adicionar.svg"
+import Adicionar from "../../assets/img/Adicionar.svg";
 import Deletar from "../../assets/img/Delete.svg";
-import Editar from "../../assets/img/Editar.png"
-import Abrir from "../../assets/img/Abrir.png"
-import Swal from "sweetalert2";
+import Editar from "../../assets/img/Editar.png";
+import Abrir from "../../assets/img/Abrir.png";
 import { useState, useEffect } from "react";
 import api from "../../services/Service";
 import { useParams } from "react-router";
-
+import Swal from "sweetalert2";
 
 export default function DocAndamentoFunc() {
     const { nomeDocumento, idDocumento } = useParams();
     const nomeCorrigido = nomeDocumento.replaceAll("-", " ");
 
-    const [showModal, setShowModal] = useState(false);
-
-    async function modalSalvarDoc(mensagem) {
-        try {
-            // Aqui tu pode colocar a lógica real de salvar o documento no backend
-            console.log("Mensagem salva:", mensagem);
-
-            alertar("success", "Documento salvo com sucesso!");
-            setShowModal(false);
-        } catch (error) {
-            alertar("error", "Erro ao salvar o documento!");
-            console.error(error);
-        }
-    }
-    async function cadDocumento(e) {
-        e.preventDefault();
-        setShowModal(true);
-    }
-
-    const [prazo, setPrazo] = useState("");
-
-    const [listaCliente, setListaCliente] = useState([]);
-    const [clienteFiltrado, setClienteFiltrado] = useState([]);
-
+    const [documentoInfo, setDocumentoInfo] = useState(null);
     const [listaVersaoDoc, setListaVersaoDoc] = useState([]);
-    const [versaoDoc, setVersaoDoc] = useState([]);
+    const [versaoSelecionadaId, setVersaoSelecionadaId] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
 
-    const [listaRN, setListaRN] = useState([]);
     const [regraDeNegocio, setRegraDeNegocio] = useState("");
-    const [regraNegocio] = useState("Edite sua Regra de Negócio.")
 
-    const [listaReqFunc, setListaReqFunc] = useState([])
-    const [requisitoFuncional, setRequisitoFuncional] = useState("");
-    const [reqFuncional] = useState("RF")
-    const [reqFuncionalText] = useState("Edite seu Requisito Funcional.")
+    const [requisitoFuncional] = useState("RF")
+    const [reqFuncionalText, setReqFuncionalText] = useState("")
 
-    const [listaReqNaoFunc, setListaReqNaoFunc] = useState([])
-    const [requisitoNaoFuncional, setRequisitoNaoFuncional] = useState("");
-    const [reqNaoFuncional] = useState("RNF")
-    const [reqNaoFuncionalText] = useState("Edite seu Requisito não Funcional.")
+    const [requisitoNaoFuncional] = useState("RNF")
+    const [reqNaoFuncionalText, setReqNaoFuncionalText] = useState("")
 
-
-    //sasa
-    const [documentosListados, setdocumentosListados] = useState([]);
+    const [documentoAtual, setDocumentoAtual] = useState(null);
     const [reqFuncionais, setReqFuncionais] = useState([]);
     const [reqNaoFuncionais, setReqNaoFuncionais] = useState([]);
 
+    const [comentarios, setComentarios] = useState([]);
+
+    const [showModal, setShowModal] = useState(false);
 
     function alertar(icone, mensagem) {
         const Toast = Swal.mixin({
@@ -87,7 +56,141 @@ export default function DocAndamentoFunc() {
         });
     }
 
-    const [pdfUrl, setPdfUrl] = useState(null);
+    async function buscarDocumento() {
+        try {
+            const resposta = await api.get(`Documentos/${idDocumento}`);
+            const doc = resposta.data;
+
+            const nomeEmpresa = doc.empresaNavigation ? doc.empresaNavigation.nome : "Empresa não informada";
+
+            setDocumentoInfo({
+                versaoAtual: doc.versaoAtual,
+                prazo: doc.prazo,
+                empresa: nomeEmpresa,
+                idDocumento: doc.idDocumento
+            });
+        } catch (error) {
+            console.error("Erro ao buscar informações do documento:", error);
+        }
+    }
+
+    async function listarVersoes() {
+        try {
+            const respostaVersoes = await api.get("documentoVersoes");
+            const versoesDoDocumentoAtual = respostaVersoes.data.filter(v => v.idDocumento == idDocumento);
+
+            setListaVersaoDoc(versoesDoDocumentoAtual.sort((a, b) => b.idVersaoDocumento - a.idVersaoDocumento));
+
+        } catch (error) {
+            console.log("Erro ao buscar versões:", error);
+        }
+    }
+
+    async function salvarNovaVersao(mensagem, versaoAtual) {
+        const numAtual = parseFloat(versaoAtual || '0.0');
+        const proximaVersao = (numAtual + 0.1);
+        const versaoFormatada = proximaVersao.toFixed(1);
+
+        try {
+            const novaVersao = {
+                idDocumento: idDocumento,
+                numeroVersao: proximaVersao,
+                mensagem: mensagem,
+                conteudo: JSON.stringify(documentoAtual)  // AQUI!!
+            };
+
+            await api.post("documentoVersoes", novaVersao);
+
+            await api.put(`Documentos/${idDocumento}`, {
+                idDocumento: idDocumento,
+                versaoAtual: proximaVersao
+            });
+
+            return versaoFormatada;
+
+        } catch (error) {
+            console.error("Erro ao salvar nova versão:", error);
+            throw new Error("Falha ao salvar a nova versão na API.");
+        }
+    }
+
+    async function modalSalvarDoc(mensagem) {
+        if (!documentoInfo || !documentoInfo.versaoAtual) {
+            alertar("error", "Informações do documento não carregadas. Tente novamente.");
+            return;
+        }
+
+        if (!mensagem.trim()) {
+            alertar("warning", "A mensagem de salvamento é obrigatória para criar uma nova versão.");
+            return;
+        }
+
+        try {
+            const novaVersao = await salvarNovaVersao(mensagem, documentoInfo.versaoAtual);
+
+            alertar("success", `Documento salvo! Nova versão: ${novaVersao}`);
+            setShowModal(false);
+
+            buscarDocumento();
+            listarVersoes();
+        } catch (error) {
+            alertar("error", "Erro ao salvar o documento!");
+            console.error(error);
+        }
+    }
+
+    const handleVersaoChange = (event) => {
+        // const id = event.target.value;
+        // if (!id || id === "placeholder") {
+        //     setVersaoSelecionadaId(null);
+        //     return;
+        // }
+        // setVersaoSelecionadaId(id);
+        const id = event.target.value;
+
+        if (!id || id === "placeholder") {
+            setVersaoSelecionadaId(null);
+            return;
+        }
+
+        setVersaoSelecionadaId(id);
+
+        // 1. Achar a versão selecionada
+        const versaoSelecionada = listaVersaoDoc.find(
+            (v) => v.idDocumentoVersoes == id
+        );
+
+        if (!versaoSelecionada) {
+            console.warn("Versão não encontrada!");
+            return;
+        }
+
+        // 2. Restaurar o documento salvo
+        try {
+            const documentoRestaurado = JSON.parse(versaoSelecionada.conteudo);
+
+            // 3. Atualizar o estado principal do documento
+            setDocumentoAtual(documentoRestaurado);
+
+            // 4. Separar RF e RNF novamente para exibir na UI
+            const requisitos = documentoRestaurado.reqDocs || [];
+
+            const rf = requisitos.filter(req =>
+                req.idRequisitoNavigation?.tipo?.toUpperCase().startsWith("RF") &&
+                !req.idRequisitoNavigation.tipo.toUpperCase().includes("RNF")
+            );
+
+            const rnf = requisitos.filter(req =>
+                req.idRequisitoNavigation?.tipo?.toUpperCase().startsWith("RNF")
+            );
+
+            setReqFuncionais(rf);
+            setReqNaoFuncionais(rnf);
+
+        } catch (error) {
+            console.error("Erro ao restaurar documento da versão:", error);
+        }
+    };
 
     async function abrirPDF() {
         try {
@@ -107,57 +210,18 @@ export default function DocAndamentoFunc() {
         setPdfUrl(null);
     };
 
-    async function listarVersoes() {
-        try {
-            const resposta = await api.get("documentoVersoes");
-            const versoesDoDocumentoAtual = resposta.data.filter(v => v.idDocumento == idDocumento);
-            setListaVersaoDoc(versoesDoDocumentoAtual);
-        } catch (error) {
-            console.log("Erro ao buscar versões:", error);
-        }
-    }
-    async function listarCliente() {
-        try {
-            const resposta = await api.get("usuario")
-            setListaCliente(resposta.data);
-
-            const apenasClientes = resposta.data.filter(u => u.idTipoUsuario === 3);
-            setClienteFiltrado(apenasClientes);
-        } catch (error) {
-            console.log("Erro ao buscar clientes:", error);
-        }
-    }
-
     //Regras de Negócio
-    async function listarRN() {
-        try {
-            const [regraDocs, regras] = await Promise.all([
-                api.get("regraDoc"),
-                api.get("Regra")
-            ]);
-
-            const regraNegocioDocAtual = regraDocs.data
-                .filter(r => r.idDocumento == idDocumento)
-                .map(r => {
-                    const regra = regras.data.find(x => x.idRegra === r.idRegra);
-                    return {
-                        ...r,
-                        nome: regra ? regra.nome : "Sem nome"
-                    };
-                });
-            console.log(regraNegocioDocAtual);
-
-            setListaRN(regraNegocioDocAtual.sort((a, b) => a.idRegrasDoc - b.idRegrasDoc))
-        } catch (error) {
-            console.log("Erro ao listar RN:", error);
-        }
-    }
     async function cadastrarRN(e) {
         e.preventDefault();
 
+        if (!regraDeNegocio || !regraDeNegocio.trim()) {
+            alertar("warning", "Preencha o campo de Cadastro!")
+            return;
+        }
+
         try {
             const novaRegra = await api.post("Regra", {
-                nome: regraNegocio
+                nome: regraDeNegocio
             });
 
             await api.post("regraDoc", {
@@ -167,12 +231,13 @@ export default function DocAndamentoFunc() {
 
             alertar("success", "Regra cadastrada no documento!");
             setRegraDeNegocio("");
-            listarRN();
+            await buscarDadosDocumento();
         } catch (error) {
             alertar("error", "Erro ao cadastrar!");
             console.log(error);
         }
     }
+
     async function deletarRN(regra) {
         Swal.fire({
             theme: 'dark',
@@ -187,9 +252,9 @@ export default function DocAndamentoFunc() {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.delete(`regraDoc/${regra.idRegrasDoc}`);
+                    await api.delete(`Regra/regra-completa/${regra.idRegrasDoc}`);
                     alertar("success", "Regra Excluída!");
-                    listarRN();
+                    await buscarDadosDocumento();
                 } catch (error) {
                     console.log(error);
                     alertar("error", "Erro ao Excluir!");
@@ -197,75 +262,239 @@ export default function DocAndamentoFunc() {
             }
         });
     }
+
+    
     async function editarRN(RN) {
-        try {
-            const result = await Swal.fire({
-                title: "Editar Regra De Negócio!",
-                html: `
-                <input id="campo1" class="swal2-input" placeholder="Título" value="${RN.nome || ''}">
+    try {
+        const result = await Swal.fire({
+            title: "Editar Regra De Negócio!",
+            html: `
+                <input id="campo1" class="swal2-input" placeholder="Título" 
+                value="${RN.idRegrasNavigation?.nome || ''}">
             `,
-                theme: 'dark',
-                showCancelButton: true,
-                confirmButtonText: "Salvar",
-                cancelButtonText: "Cancelar",
-                focusConfirm: false,
-                preConfirm: () => {
-                    const campo1 = document.getElementById("campo1").value;
-                    if (!campo1) {
-                        Swal.showValidationMessage("Preencha o Campo");
-                        return false;
-                    }
-                    return campo1;
+            theme: "dark",
+            showCancelButton: true,
+            confirmButtonText: "Salvar",
+            cancelButtonText: "Cancelar",
+            focusConfirm: false,
+            preConfirm: () => {
+                const campo1 = document.getElementById("campo1").value.trim();
+                if (!campo1) {
+                    Swal.showValidationMessage("Preencha o Campo");
+                    return;
                 }
-            });
+                return campo1;
+            },
+        });
 
-            if (result.isConfirmed) {
-                const novoNome = result.value;
+        if (!result.isConfirmed) return;
 
-                await api.put(`Regra/${RN.idRegras}`, {
-                    nome: novoNome
-                });
+        const novoNome = result.value;
+        const idRegra = RN.idRegrasNavigation.idRegras;
 
-                alertar("success", "Regra atualizada com sucesso!");
-                listarRN();
-            }
-        } catch (error) {
-            console.log(error);
-            alertar("error", "Erro ao atualizar a regra!");
-        }
-    }
-    //Requisito Funcional
-    async function listarReqFunc() {
-        try {
-            const [reqFuncDocs, requisitos] = await Promise.all([
-                api.get("ReqDoc"),
-                api.get("Requisito")
-            ]);
+        await api.put(`Regra/${idRegra}`, {
+            idRegras: idRegra,
+            nome: novoNome,
+        });
 
-            const rnfDoDocumentoAtual = reqFuncDocs.data
-                .filter(r => r.idDocumento == idDocumento)
-                .map(r => {
-                    const requisito = requisitos.data.find(x => x.idRequisito === r.idRequisito);
+        setDocumentoAtual((prev) => {
+            if (!prev) return prev;
+
+            const novasRegras = (prev.regrasDocs || []).map((r) => {
+                const idRegraRelacionada = r.idRegrasNavigation?.idRegras;
+
+                if (idRegraRelacionada === idRegra) {
                     return {
                         ...r,
-                        textoReq: requisito ? requisito.textoReq : "Sem texto",
-                        tipo: requisito ? requisito.tipo : ""
+                        idRegrasNavigation: {
+                            ...r.idRegrasNavigation,
+                            nome: novoNome,
+                        },
                     };
-                })
-                .filter(r => r.tipo === "RF");
+                }
 
-            setListaReqFunc(rnfDoDocumentoAtual.sort((a, b) => a.idRequisito - b.idRequisito));
-            console.log(rnfDoDocumentoAtual);
-        } catch (error) {
-            console.log("Erro ao listar RNF:", error);
-        }
+                return r;
+            });
+
+            return {
+                ...prev,
+                regrasDocs: novasRegras,
+            };
+        });
+
+        alertar("success", "Regra atualizada com sucesso!");
+
+        // await buscarDadosDocumento();
+    } catch (error) {
+        console.log("Erro ao editar RN:", error);
+        alertar("error", "Erro ao atualizar a regra!");
     }
+}
+
+
+async function editarRF(rf) {
+    try {
+        const result = await Swal.fire({
+            title: "Editar Requisito!",
+            html: `
+                <input id="campo1" class="swal2-input" placeholder="Título" 
+                value="${rf.idRequisitoNavigation?.nome || ''}">
+            `,
+            theme: "dark",
+            showCancelButton: true,
+            confirmButtonText: "Salvar",
+            cancelButtonText: "Cancelar",
+            focusConfirm: false,
+            preConfirm: () => {
+                const campo1 = document.getElementById("campo1").value.trim();
+                if (!campo1) {
+                    Swal.showValidationMessage("Preencha o Campo");
+                    return;
+                }
+                return campo1;
+            },
+        });
+
+        if (!result.isConfirmed) return;
+
+        const novoNome = result.value;
+
+        // ID DO REQDOC
+        const idReqDoc = rf.idReqDoc;
+
+        // MONTA O REQDOC COMPLETO PARA O BACKEND
+        const reqDocAtualizado = {
+            idReqDoc: idReqDoc,
+            idRequisito: rf.idRequisito,
+            idDocumento: rf.idDocumento,
+            idRequisitoNavigation: {
+                ...rf.idRequisitoNavigation,
+                nome: novoNome,
+            },
+            idDocumentoNavigation: null,
+        };
+
+        await api.put(`ReqDoc/${idReqDoc}`, reqDocAtualizado);
+
+        // ATUALIZA NA TELA
+        setDocumentoAtual(prev => {
+            if (!prev) return prev;
+
+            const novosReq = prev.reqDocs.map(r => {
+                if (r.idReqDoc === idReqDoc) {
+                    return {
+                        ...r,
+                        idRequisitoNavigation: {
+                            ...r.idRequisitoNavigation,
+                            nome: novoNome
+                        }
+                    };
+                }
+                return r;
+            });
+
+            return {
+                ...prev,
+                reqDocs: novosReq
+            };
+        });
+
+        alertar("success", "Requisito atualizado com sucesso!");
+
+    } catch (error) {
+        console.log("Erro ao editar RF:", error);
+        alertar("error", "Erro ao atualizar o requisito!");
+    }
+}
+
+
+
+
+async function editarRNF(rnf) {
+    try {
+        const result = await Swal.fire({
+            title: "Editar RNF!",
+            html: `
+                <input id="campo1" class="swal2-input" placeholder="Título" 
+                value="${rnf.idRnfNavigation?.nome || ''}">
+            `,
+            theme: "dark",
+            showCancelButton: true,
+            confirmButtonText: "Salvar",
+            cancelButtonText: "Cancelar",
+            focusConfirm: false,
+            preConfirm: () => {
+                const campo1 = document.getElementById("campo1").value.trim();
+                if (!campo1) {
+                    Swal.showValidationMessage("Preencha o Campo");
+                    return;
+                }
+                return campo1;
+            },
+        });
+
+        if (!result.isConfirmed) return;
+
+        const novoNome = result.value;
+
+        const idReqDoc = rnf.idReqDoc;
+
+        const rnfAtualizado = {
+            idReqDoc: idReqDoc,
+            idRnf: rnf.idRnf,
+            idDocumento: rnf.idDocumento,
+            idRnfNavigation: {
+                ...rnf.idRnfNavigation,
+                nome: novoNome,
+            },
+            idDocumentoNavigation: null,
+        };
+
+        await api.put(`ReqDoc/${id}`, rnfAtualizado);
+
+        setDocumentoAtual(prev => {
+            if (!prev) return prev;
+
+            const novasRNFs = prev.idReqDoc.map(r => {
+                if (r.idReqDoc === idReqDoc) {
+                    return {
+                        ...r,
+                        idRnfNavigation: {
+                            ...r.idRnfNavigation,
+                            nome: novoNome
+                        }
+                    };
+                }
+                return r;
+            });
+
+            return {
+                ...prev,
+                rnfDocs: novasRNFs
+            };
+        });
+
+        alertar("success", "RNF atualizada com sucesso!");
+
+    } catch (error) {
+        console.log("Erro ao editar RNF:", error);
+        alertar("error", "Erro ao atualizar a RNF!");
+    }
+}
+
+
+    //Requisito Funcional
     async function cadastrarReqFuncional(e) {
         e.preventDefault()
 
+        if (!reqFuncionalText || !reqFuncionalText.trim()) {
+            alertar("warning", "Preencha o campo de Cadastro!")
+            return;
+        }
+
         try {
             const novaRequisito = await api.post("Requisito", {
-                tipo: reqFuncional,
+                tipo: requisitoFuncional,
                 textoReq: reqFuncionalText
             });
 
@@ -275,45 +504,26 @@ export default function DocAndamentoFunc() {
             });
 
             alertar("success", "Requisito cadastrado no documento!");
-            setRequisitoFuncional("");
-            listarReqFunc();
+            setReqFuncionalText("");
+            await buscarDadosDocumento();
         } catch (error) {
             alertar("error", "Erro ao cadastrar!");
             console.log(error);
         }
     }
+
     //Requisito Não Funcional
-    async function listarReqNaoFunc() {
-        try {
-            const [reqNaoFuncDocs, requisitos] = await Promise.all([
-                api.get("ReqDoc"),
-                api.get("Requisito")
-            ]);
-
-            const rnfDoDocumentoAtual = reqNaoFuncDocs.data
-                .filter(r => r.idDocumento == idDocumento)
-                .map(r => {
-                    const requisito = requisitos.data.find(x => x.idRequisito === r.idRequisito);
-                    return {
-                        ...r,
-                        textoReq: requisito ? requisito.textoReq : "Sem texto",
-                        tipo: requisito ? requisito.tipo : ""
-                    };
-                })
-                .filter(r => r.tipo === "RNF");
-
-            setListaReqNaoFunc(rnfDoDocumentoAtual.sort((a, b) => a.idRequisito - b.idRequisito));
-            console.log(rnfDoDocumentoAtual);
-        } catch (error) {
-            console.log("Erro ao listar RNF:", error);
-        }
-    }
     async function cadastrardReqNaoFuncional(e) {
         e.preventDefault()
 
+        if (!reqNaoFuncionalText || !reqNaoFuncionalText.trim()) {
+            alertar("warning", "Preencha o campo de Cadastro!")
+            return;
+        }
+
         try {
             const novaRequisito = await api.post("Requisito", {
-                tipo: reqNaoFuncional,
+                tipo: requisitoNaoFuncional,
                 textoReq: reqNaoFuncionalText
             });
 
@@ -323,14 +533,15 @@ export default function DocAndamentoFunc() {
             });
 
             alertar("success", "Requisito cadastrado no documento!");
-            setRequisitoNaoFuncional("");
-            listarReqNaoFunc();
+            setReqNaoFuncionalText("");
+            await buscarDadosDocumento();
         } catch (error) {
             alertar("error", "Erro ao cadastrar!");
             console.log(error);
         }
     }
-    async function deletarReqNaoFunc(regra) {
+
+    async function deletarReqNaoFuncEReqFunc(requisito) {
         Swal.fire({
             theme: 'dark',
             title: 'Tem Certeza?',
@@ -344,9 +555,9 @@ export default function DocAndamentoFunc() {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.delete(`ReqDoc/${regra.idReqDoc}`);
+                    await api.delete(`Requisito/requisito-completo/${requisito.idReqDoc}`);
                     alertar("success", "Requisito Excluído!");
-                    listarReqNaoFunc();
+                    await buscarDadosDocumento();
                 } catch (error) {
                     console.log(error);
                     alertar("error", "Erro ao Excluir!");
@@ -354,47 +565,71 @@ export default function DocAndamentoFunc() {
             }
         });
     }
-    async function listarDocumento() {
+
+    async function carregarComentarios() {
         try {
-            const todosDocumentos = await api.get("/Documentos");
-            const dados = todosDocumentos.data;
-
-            setdocumentosListados(dados); // Salva o array principal
-            // console.log(todosDocumentos.data);
-
-            // Se você está lidando com um array de UM documento (como o seu console.log sugere)
-            if (dados.length > 0) {
-                const doc = dados[0]; // Pega o primeiro documento
-
-                // 🎯 Filtra os requisitos
-                const funcionais = doc.reqDocs.filter(req =>
-                    req.idRequisitoNavigation.tipo &&
-                    req.idRequisitoNavigation.tipo.toUpperCase().startsWith('RF') &&
-                    !req.idRequisitoNavigation.tipo.toUpperCase().includes('RNF')
-                );
-
-                const naoFuncionais = doc.reqDocs.filter(req =>
-                    req.idRequisitoNavigation.tipo &&
-                    req.idRequisitoNavigation.tipo.toUpperCase().startsWith('RNF')
-                );
-
-                setReqFuncionais(funcionais);
-                setReqNaoFuncionais(naoFuncionais);
-            }
+            const resposta = await api.get(`/Comentario/documento/${idDocumento}`);
+            setComentarios(resposta.data);
         } catch (error) {
-            console.log("Deu erro!")
+            console.error("Erro ao carregar comentários:", error);
         }
     }
 
+ async function buscarDadosDocumento() {
+    try {
+        const response = await api.get(`/Documentos/${idDocumento}`);
+        const dados = response.data;
+
+        setDocumentoAtual(dados);  // <-- AQUI atualizará as regras também, se você usa documentoAtual
+
+        // Se você utiliza regras separadas em outro estado:
+        // setRegrasDocumento(dados.regrasDocs || []);
+
+        if (!dados || typeof dados !== "object") return;
+
+        const reqs = dados.reqDocs || [];
+
+        const funcionais = reqs.filter(req =>
+            req.idRequisitoNavigation?.tipo
+                ?.toUpperCase()
+                .startsWith("RF") &&
+            !req.idRequisitoNavigation.tipo
+                .toUpperCase()
+                .includes("RNF")
+        );
+
+        const naoFuncionais = reqs.filter(req =>
+            req.idRequisitoNavigation?.tipo
+                ?.toUpperCase()
+                .startsWith("RNF")
+        );
+
+        setReqFuncionais(funcionais);
+        setReqNaoFuncionais(naoFuncionais);
+    } catch (error) {
+        console.log("Erro ao buscar documento:", error);
+    }
+}
+
+
+
     useEffect(() => {
         // listarCliente();
-        // listarVersoes();
         // listarRN();
         // listarReqFunc();
         // listarReqNaoFunc();
-
-        listarDocumento();
+        
+        listarVersoes();
+        carregarComentarios();
+        buscarDadosDocumento();
+        buscarDocumento();
     }, [])
+
+    //CadastrarDocumento
+    async function cadDocumento(e) {
+        e.preventDefault();
+        setShowModal(true);
+    }
 
     return (
         <div className="containerGeral'">
@@ -408,121 +643,147 @@ export default function DocAndamentoFunc() {
                             <h1>Documento em Andamento</h1>
                         </div>
 
-                        <button className="abrirDoc" onClick={abrirPDF}>
-                            <img src={Abrir} alt="" />
-                            <p>Abrir PDF</p>
-                        </button>
+                        <div className="PDFeVersao">
+                            <button className="abrirDoc" onClick={abrirPDF}>
+                                <img src={Abrir} alt="" />
+                                <p>Abrir PDF</p>
+                            </button>
 
-                        <form action="" className="documento">
-                            <div className="nomeDoc">
-                                <p>Nome: <span>{nomeCorrigido || "Carregando..."}</span></p>
+                            <div className="botaoFiltrarVersoesDoc">
+                                <p>Versões:</p>
+                                <select onChange={handleVersaoChange} value={versaoSelecionadaId || "placeholder"}>
+                                    <option value="placeholder" disabled>Versões</option>
+                                    {listaVersaoDoc.length > 0 ? (
+                                        listaVersaoDoc.map(versao => (
+                                            <option key={versao.idDocumentoVersoes} value={versao.idDocumentoVersoes}>
+                                                V{versao.numeroVersao} ({new Date(versao.dataCriacao).toLocaleDateString()})
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option disabled>S/Versões</option>
+                                    )}
+                                </select>
                             </div>
+                        </div>
+
+                        <form className="documento">
+                            <div className="nomeDoc">
+                                <p>Nome: <span>{nomeCorrigido}</span></p>
+                            </div>
+
                             <div className="infDocumento">
-                                <div className="botaoFiltrarVersoesDoc">
-                                    <p>Versão Documento</p>
-                                    <select>
-                                        <option disabled selected>Versões</option>
-                                        {listaVersaoDoc.length > 0 ? (
-                                            listaVersaoDoc.map(versao => (
-                                                <option key={versao.idVersaoDocumento} value={versao.idVersaoDocumento}>
-                                                    {versao.numeroVersao}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option disabled>S/Versões</option>
-                                        )}
-                                    </select>
-                                </div>
-
                                 <div className="botaoSelectRementente">
-                                    <p>Rementente</p>
-                                    <select>
-                                        <option disabled selected>Destinatário</option>
-                                        {clienteFiltrado.length > 0 ? (
-                                            clienteFiltrado.map((usuario) =>
-                                                <option key={usuario.idUsuario} value={usuario.idUsuario}>
-                                                    {usuario.nome}
-                                                </option>
-                                            )
-                                        ) : (
-                                            <option disabled>Nenhum cliente encontrado</option>
-                                        )}
-                                    </select>
+                                    <label>Rementente:</label>
+                                    <span>{documentoInfo?.empresa}</span>
                                 </div>
-
 
                                 <div className="prazoEntrega">
-                                    <label>Prazo de Entrega:</label>
-                                    <input type="date" />
+                                    <label>Prazo:</label>
+                                    <span>{documentoInfo?.prazo}</span>
+                                </div>
+
+                                <div className="botaoFiltrarVersoesDoc">
+                                    <p>Versão Atual:</p>
+                                    <span>{documentoInfo?.versaoAtual}</span>
                                 </div>
                             </div>
 
                             <div className="regrasDeNegocio">
                                 <div className="tituloRN">
                                     <h2>Regras de Negócio</h2>
-                                    <button type="button" onClick={(e) => cadastrarRN(e)}>
-                                        <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
-                                    </button>
+
+                                    <div className="cadRN">
+                                        <input
+                                            type="text"
+                                            placeholder="Edite sua Regra de Negócio."
+                                            value={regraDeNegocio}
+                                            onChange={(e) => setRegraDeNegocio(e.target.value)}
+                                        />
+                                        <button type="button" onClick={cadastrarRN}>
+                                            <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <section>
-                                    {documentosListados.length > 0 ? (
-                                        documentosListados.map((doc, index) => (
-                                            doc.regrasDocs.map((regra) => (
-                                                <div className="listaRN" key={regra.idRegrasDoc}>
-                                                    <p>RN{String(index + 1).padStart(2, "0")}: <span>
-                                                        <li key={regra.idRegrasDoc}>
-                                                            {regra.idRegrasNavigation.nome}
-                                                        </li>
-                                                    </span></p>
-                                                    <div className="iconeRequisitosERegra">
-                                                        <img
-                                                            onClick={() => deletarRN(doc)}
-                                                            className="botaoExcluir"
-                                                            src={Deletar}
-                                                            alt="Lixeira"
-                                                        />
-                                                        <img
-                                                            onClick={() => editarRN(doc)}
-                                                            className="botaoEditar"
-                                                            src={Editar}
-                                                            alt="Caneta de Editar"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))
+                                    {documentoAtual?.regrasDocs && documentoAtual.regrasDocs.length > 0 ? (
+                                        documentoAtual.regrasDocs.map((regra, index) => (
+                                            <div className="listaRN" key={regra.idRegrasDoc}>
+                                                <p>
+                                                    <span className="tagListaRnRnfRf">
+                                                        RN{String(index + 1).padStart(2, "0")}:
+                                                    </span>
+                                                    {regra.idRegrasNavigation?.nome}
+                                                </p>
 
+                                                <div className="iconeRequisitosERegra">
+                                                    <img
+                                                        onClick={() => deletarRN(regra)}
+                                                        className="botaoExcluir"
+                                                        src={Deletar}
+                                                        alt="Lixeira"
+                                                    />
+                                                    <img
+                                                        onClick={() => editarRN(regra)}
+                                                        className="botaoEditar"
+                                                        src={Editar}
+                                                        alt="Caneta de Editar"
+                                                    />
+                                                </div>
+                                            </div>
                                         ))
                                     ) : (
                                         <div className="listaRN">
-                                            <p>Cadastrar Regras de Negócio.</p>
+                                            <p>Nenhuma Regra de Negócio.</p>
                                         </div>
                                     )}
                                 </section>
                             </div>
 
-
                             <div className="requisitosFuncionais">
                                 <div className="tituloRNF">
                                     <h2>Requisitos Funcionais</h2>
-                                    <button type="button" onClick={(e) => cadastrarReqFuncional(e)}>
-                                        <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
-                                    </button>
+                                    <div className="cadRN">
+                                        <input
+                                            type="text"
+                                            placeholder="Edite seu Requisito Funcional"
+                                            value={reqFuncionalText}
+                                            onChange={(e) => setReqFuncionalText(e.target.value)}
+                                        />
+                                        <button type="button" onClick={cadastrarReqFuncional}>
+                                            <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <section>
                                     {reqFuncionais.length > 0 ? (
-                                        reqFuncionais.map((rf, index) => ( // Usando 'rf' para clareza
+                                        reqFuncionais.map((rf, index) => (
                                             <div className="listaRF" key={rf.idReqDoc}>
-                                                <p>RF{String(index + 1).padStart(2, "0")}: <span>{rf.idRequisitoNavigation.textoReq}</span></p>
+                                                <p>
+                                                    <span className="tagListaRnRnfRf">
+                                                        RF{String(index + 1).padStart(2, "0")}:
+                                                    </span>
+                                                    {rf.idRequisitoNavigation.textoReq}
+                                                </p>
+
                                                 <div className="iconeRequisitosERegra">
-                                                    <img onClick={() => deletarReqNaoFunc(rf)} className="botaoExcluir" src={Deletar} alt="Lixeira" />
-                                                    <img className="botaoEditar" src={Editar} alt="Caneta de Editar" />
+                                                    <img
+                                                        onClick={() => deletarReqNaoFuncEReqFunc(rf)}
+                                                        className="botaoExcluir" src={Deletar}
+                                                        alt="Lixeira"
+                                                    />
+                                                    <img
+                                                        onClick={() => editarRF(rf)}
+                                                        className="botaoEditar"
+                                                        src={Editar}
+                                                        alt="Caneta de Editar"
+                                                    />
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="listaRNF">
+                                        <div className="listaRF">
                                             <p>Nenhum RF cadastrado.</p>
                                         </div>
                                     )}
@@ -533,20 +794,40 @@ export default function DocAndamentoFunc() {
                             <div className="requisitosNaoFuncionais">
                                 <div className="tituloRF">
                                     <h2>Requisitos não Funcionais</h2>
-                                    <button type="button" onClick={(e) => cadastrardReqNaoFuncional(e)}>
-                                        <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
-                                    </button>
+                                    <div className="cadRN">
+                                        <input
+                                            type="text"
+                                            placeholder="Edite seu Requisito Não Funcional"
+                                            value={reqNaoFuncionalText}
+                                            onChange={(e) => setReqNaoFuncionalText(e.target.value)}
+                                        />
+                                        <button type="button" onClick={cadastrardReqNaoFuncional}>
+                                            <img className="botaoAdicionar" src={Adicionar} alt="Botao De Adicionar" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <section>
                                     {reqNaoFuncionais.length > 0 ? (
                                         reqNaoFuncionais.map((rnf, index) => ( // Usando 'rnf' para clareza
                                             <div className="listaRNF" key={rnf.idReqDoc}>
-                                                <p>RNF{String(index + 1).padStart(2, "0")}: <span>{rnf.idRequisitoNavigation.textoReq}</span></p>
+                                                <p>
+                                                    <span className="tagListaRnRnfRf">RNF{String(index + 1).padStart(2, "0")}:</span>{rnf.idRequisitoNavigation.textoReq}
+                                                </p>
 
                                                 <div className="iconeRequisitosERegra">
-                                                    <img onClick={() => deletarReqNaoFunc(rnf)} className="botaoExcluir" src={Deletar} alt="Lixeira" />
-                                                    <img className="botaoEditar" src={Editar} alt="Caneta de Editar" />
+                                                    <img
+                                                        onClick={() => deletarReqNaoFuncEReqFunc(rnf)}
+                                                        className="botaoExcluir"
+                                                        src={Deletar}
+                                                        alt="Lixeira"
+                                                    />
+                                                    <img
+                                                        onClick={() => editarRNF(rnf)}
+                                                        className="botaoEditar"
+                                                        src={Editar}
+                                                        alt="Caneta de Editar"
+                                                    />
                                                 </div>
                                             </div>
                                         ))
@@ -558,9 +839,9 @@ export default function DocAndamentoFunc() {
                                 </section>
                             </div>
 
-                            <div className="buttonFinalizar">
+                            <div className="">
                                 <button onClick={cadDocumento} className="finalizarDoc">
-                                    Finalizar
+                                    Finalizar/Salvar
                                 </button>
                             </div>
 
@@ -573,24 +854,33 @@ export default function DocAndamentoFunc() {
                                 <h1>Comentários</h1>
                             </div>
                         </div>
-
-                        <div className="cardFeedbackDoc">
-                            <div className="cabecalhoFeedbackDoc">
-                                <span className="nomeFeedbackDoc">Tirulipa</span>
-
-                                <div className="horarioDataComentario">
-                                    <span className="dataFeedbackDoc">11/09/2001</span>
-                                    <span className="horarioFeedbackDoc">12:03PM</span>
+                        {comentarios && comentarios.length > 0 ? (
+                            comentarios.map((item) => (
+                                <div key={item.idComentario} className="cardFeedbackDoc">
+                                    <div className="cabecalhoFeedbackDoc">
+                                        <span className="nomeFeedbackDoc">{item.idUsuarioNavigation.nome}</span>
+                                        <div className="horarioDataComentario">
+                                            <span className="dataFeedbackDoc">
+                                                {new Date(item.dataCriacao).toLocaleDateString()}
+                                            </span>
+                                            <span className="horarioFeedbackDoc">
+                                                {new Date(item.dataCriacao).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p className="mensagemFeedbackDoc">{item.texto}</p>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="comentarioVazio">
+                                <p>Não há comentários ainda.</p>
                             </div>
-                            <p className="mensagemFeedbackDoc">Poderia Alterar a Terceira Linha da Regra de Negócios fgdhsjhgfvdsbjucdgbvdnjviudhebdnvjiudhwgbdvnjduwshgbdvnjugrfehj9dfivbedjbfhj.</p>
-                        </div>
+                        )}
                     </section>
                 </section>
                 {showModal && (
                     <ModalSalvarDocumento
                         nomeDocumento={nomeCorrigido}
-                        prazoEntrega={prazo}
                         onCancel={() => setShowModal(false)}
                         onPublish={modalSalvarDoc}
                     />
